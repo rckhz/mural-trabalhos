@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { LogIn, Search } from "lucide-react";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import { Voltar } from "@/components/voltar";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +69,12 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-      <Voltar href="/">Início</Voltar>
+      <div className="flex items-start justify-between gap-2">
+        <Voltar href="/">Início</Voltar>
+        <Link href="/entrar" className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <LogIn />Entrar para enviar trabalho
+        </Link>
+      </div>
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Mural de projetos</h1>
       <p className="mt-1 text-muted-foreground">Os mais recentes aparecem primeiro.</p>
 

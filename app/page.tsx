@@ -4,7 +4,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 
 const opcoes = [
   { href: "/mural", Icone: GraduationCap, titulo: "Sou aluno", texto: "Ver o mural de projetos" },
-  { href: "/entrar", Icone: School, titulo: "Sou professor", texto: "Entrar na área de gestão" },
+  { href: "/painel", Icone: School, titulo: "Sou professor", texto: "Entrar na área de gestão" },
 ];
 
 export default function Inicio() {
