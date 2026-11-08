@@ -11,12 +11,12 @@ import { BotaoRemover } from "./botao-remover";
 import { CadastroAlunos } from "./cadastro";
 import { InterruptorAdmin } from "./interruptor-admin";
 
-// Cadastro em lote cria várias contas seguidas; dá tempo de sobra.
+// Cadastro em lote cria vÃ¡rias contas seguidas; dÃ¡ tempo de sobra.
 export const maxDuration = 60;
 
 type Turma = { id: string; serie: number; nome: string; ano_letivo: number };
 type Conta = { id: string; nome: string; funcao: "professora" | "aluno"; ativo: boolean; deve_trocar_senha: boolean };
-const rotulo = (t: Turma) => `${t.serie}º ${t.nome} · ${t.ano_letivo}`;
+const rotulo = (t: Turma) => `${t.serie}Âº ${t.nome} Â· ${t.ano_letivo}`;
 const CAMPOS = "id, nome, funcao, ativo, deve_trocar_senha";
 
 export default async function Alunos({ searchParams }: { searchParams: Promise<{ turma?: string }> }) {
@@ -38,7 +38,7 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
       ? supabase.from("perfil").select(CAMPOS).eq("turma_id", sel.id).order("nome").returns<Conta[]>()
       : Promise.resolve({ data: [] as Conta[] }),
     supabase.from("perfil").select(CAMPOS).eq("funcao", "professora").order("nome").returns<Conta[]>(),
-    // O e-mail fica no Auth, não na tabela perfil.
+    // O e-mail fica no Auth, nÃ£o na tabela perfil.
     supabaseAdmin().auth.admin.listUsers({ perPage: 1000 }),
   ]);
   const emailPorId = new Map((usuarios?.users ?? []).map((u) => [u.id, u.email ?? ""]));
@@ -58,7 +58,7 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
               aria-current={t.id === sel?.id ? "page" : undefined}
               className={buttonVariants({ variant: t.id === sel?.id ? "default" : "outline", size: "sm" })}
             >
-              {t.serie}º {t.nome}
+              {t.serie}Âº {t.nome}
             </Link>
           ))}
         </nav>
@@ -67,7 +67,7 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
-                <h2>{sel ? rotulo(sel) : "Nenhuma turma"} · {membros?.length ?? 0} contas</h2>
+                <h2>{sel ? rotulo(sel) : "Nenhuma turma"} Â· {membros?.length ?? 0} contas</h2>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -84,7 +84,7 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
                             {a.funcao === "professora" && <Badge className="ml-2">administrador</Badge>}
                             {!a.ativo && <Badge variant="destructive" className="ml-2">desativado</Badge>}
                             {a.ativo && a.deve_trocar_senha && (
-                              <Badge variant="secondary" className="ml-2">aguardando 1º acesso</Badge>
+                              <Badge variant="secondary" className="ml-2">aguardando 1Âº acesso</Badge>
                             )}
                           </p>
                           <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
@@ -94,7 +94,7 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
                           {a.id !== user.id && <BotaoRemover id={a.id} nome={a.nome} />}
                         </div>
                       </div>
-                      <InterruptorAdmin id={a.id} admin={a.funcao === "professora"} bloqueado={a.id === user.id} />
+                      <InterruptorAdmin id={a.id} admin={a.funcao === "professora"} proprio={a.id === user.id} />
                     </li>
                   ))}
                 </ul>
@@ -113,7 +113,7 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
           <CardHeader>
             <CardTitle className="text-lg"><h2>Administradores</h2></CardTitle>
             <CardDescription>
-              Contas com acesso total ao painel. Para dar acesso a alguém, ligue o interruptor na lista da turma.
+              Contas com acesso total ao painel. Para dar acesso a alguÃ©m, ligue o interruptor na lista da turma.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -123,12 +123,12 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
                   <div className="min-w-0">
                     <p className="font-medium">
                       {a.nome}
-                      {a.id === user.id && <Badge variant="secondary" className="ml-2">você</Badge>}
+                      {a.id === user.id && <Badge variant="secondary" className="ml-2">vocÃª</Badge>}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-2">
-                    <InterruptorAdmin id={a.id} admin bloqueado={a.id === user.id} />
+                    <InterruptorAdmin id={a.id} admin proprio={a.id === user.id} />
                     {a.id !== user.id && <BotaoRemover id={a.id} nome={a.nome} />}
                   </div>
                 </li>
