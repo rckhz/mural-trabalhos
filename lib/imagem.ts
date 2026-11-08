@@ -7,7 +7,9 @@ const gerar = (canvas: HTMLCanvasElement, tipo: string, qualidade: number) =>
   new Promise<Blob | null>((r) => canvas.toBlob(r, tipo, qualidade));
 
 export async function comprimirFoto(arquivo: File): Promise<{ blob: Blob; extensao: string }> {
-  const imagem = await createImageBitmap(arquivo);
+  const imagem = await createImageBitmap(arquivo).catch(() => {
+    throw new Error("o navegador não conseguiu abrir essa imagem. Tente salvar em JPG ou PNG");
+  });
   const escala = Math.min(1, LADO_MAXIMO / Math.max(imagem.width, imagem.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(imagem.width * escala);

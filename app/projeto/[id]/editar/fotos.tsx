@@ -22,25 +22,35 @@ export function Fotos({ projetoId, fotos }: { projetoId: string; fotos: { id: st
     let enviadas = 0;
     for (const [i, arquivo] of arquivos.entries()) {
       setMensagem({ texto: `Enviando foto ${i + 1} de ${arquivos.length}...` });
+      // Cada etapa tem a sua mensagem, para saber exatamente onde falhou.
+      let etapa = "ler a foto";
       try {
-        if (!arquivo.type.startsWith("image/")) throw new Error("não é imagem");
+        if (/\.(heic|heif)$/i.test(arquivo.name) || /hei[cf]/i.test(arquivo.type)) {
+          throw new Error("foto no formato HEIC (iPhone), que o navegador não abre. Envie em JPG ou PNG");
+        }
+        if (arquivo.type && !arquivo.type.startsWith("image/")) throw new Error("o arquivo não é uma imagem");
+        etapa = "reduzir a foto";
         const { blob, extensao } = await comprimirFoto(arquivo);
+        etapa = "enviar ao armazenamento";
         const caminho = `${projetoId}/${crypto.randomUUID()}.${extensao}`;
         const { error } = await supabase.storage.from("fotos").upload(caminho, blob, { contentType: blob.type });
         if (error) throw error;
+        etapa = "salvar no projeto";
         const r = await adicionarFoto(projetoId, caminho);
         if (r.erro) {
           await supabase.storage.from("fotos").remove([caminho]);
           throw new Error(r.erro);
         }
         enviadas++;
-      } catch {
-        falhas.push(arquivo.name);
+      } catch (e) {
+        const motivo = e instanceof Error ? e.message : String(e);
+        console.error(`Foto "${arquivo.name}" falhou ao ${etapa}:`, e);
+        falhas.push(`${arquivo.name} (ao ${etapa}: ${motivo})`);
       }
     }
     setMensagem(
       falhas.length
-        ? { texto: `${enviadas} enviada(s). Não foi possível enviar: ${falhas.join(", ")}`, erro: true }
+        ? { texto: `${enviadas} enviada(s). Não foi possível enviar: ${falhas.join("; ")}`, erro: true }
         : { texto: `${enviadas} foto(s) enviada(s)!` },
     );
     setOcupado(false);
