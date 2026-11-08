@@ -9,22 +9,6 @@ import { sessaoAtual } from "@/lib/sessao";
 
 export type Resultado = { erro?: string; ok?: boolean };
 
-// Cada projeto tem 2 arquivos obrigatórios: o documento (PDF) e o slide (PowerPoint).
-export type FormatoDocumento = "pdf" | "slide";
-const FORMATOS: FormatoDocumento[] = ["pdf", "slide"];
-
-// Quais dos 2 arquivos ainda faltam no projeto (no bimestre dele).
-async function arquivosFaltando(s: Awaited<ReturnType<typeof sessao>>, projetoId: string) {
-  const { data: projeto } = await s.supabase.from("projeto").select("bimestre").eq("id", projetoId).maybeSingle();
-  const { data: docs } = await s.supabase
-    .from("documento")
-    .select("formato")
-    .eq("projeto_id", projetoId)
-    .eq("bimestre", projeto?.bimestre ?? 0);
-  const tem = new Set((docs ?? []).map((d) => d.formato));
-  return [!tem.has("pdf") && "o documento em PDF", !tem.has("slide") && "o slide"].filter(Boolean) as string[];
-}
-
 async function sessao() {
   const s = await sessaoAtual();
   if (!s) throw new Error("Sessão expirada. Entre de novo.");
@@ -43,11 +27,24 @@ function revalidar(id: string) {
   revalidatePath("/mural");
 }
 
+// Só aceita links http(s) — nada de "javascript:" ou outros esquemas.
+function lerLink(valor: FormDataEntryValue | string | null): { link: string | null; erro?: string } {
+  const texto = String(valor ?? "").trim();
+  if (!texto) return { link: null };
+  try {
+    const url = new URL(/^https?:\/\//i.test(texto) ? texto : `https://${texto}`);
+    if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".")) throw new Error();
+    if (url.href.length > 500) return { link: null, erro: "O link é muito longo." };
+    return { link: url.href };
+  } catch {
+    return { link: null, erro: "Esse link não parece válido. Copie o endereço completo do slide." };
+  }
+}
+
 function lerDados(form: FormData) {
   return {
     titulo: String(form.get("titulo") ?? "").trim(),
-    // O semestre é preenchido pelo banco a partir do bimestre.
-    bimestre: Number(form.get("bimestre")),
+    semestre: Number(form.get("semestre")),
     disciplina: String(form.get("disciplina") ?? "").trim() || null,
     descricao: String(form.get("descricao") ?? "").trim() || null,
   };
@@ -55,7 +52,7 @@ function lerDados(form: FormData) {
 
 function validar(d: ReturnType<typeof lerDados>) {
   if (d.titulo.length < 3 || d.titulo.length > 120) return "O título precisa ter entre 3 e 120 caracteres.";
-  if (![1, 2, 3, 4].includes(d.bimestre)) return "Escolha o bimestre.";
+  if (![1, 2].includes(d.semestre)) return "Escolha o semestre.";
   if (d.descricao && d.descricao.length > 3000) return "A descrição pode ter no máximo 3000 caracteres.";
   return null;
 }
@@ -71,7 +68,7 @@ export async function criarProjeto(_: string | null, form: FormData): Promise<st
 
   const { data, error } = await s.supabase
     .from("projeto")
-    .insert({ titulo: d.titulo, bimestre: d.bimestre, disciplina: d.disciplina, turma_id: turmaId })
+    .insert({ titulo: d.titulo, semestre: d.semestre, disciplina: d.disciplina, turma_id: turmaId })
     .select("id")
     .single();
   if (error || !data) return "Não foi possível criar o projeto.";
@@ -85,19 +82,25 @@ export async function salvarDados(_: Resultado | null, form: FormData): Promise<
   const erro = validar(d);
   if (erro) return { erro };
 
-  const { data: atual } = await s.supabase.from("projeto").select("bimestre").eq("id", id).maybeSingle();
-  if (!atual) return { erro: "Projeto não encontrado." };
-  if (atual.bimestre !== d.bimestre) {
-    const { count } = await s.supabase
-      .from("documento")
-      .select("id", { count: "exact", head: true })
-      .eq("projeto_id", id);
-    if (count) return { erro: "Não dá para mudar o bimestre de um projeto que já tem documento enviado." };
-  }
-
   const { data, error } = await s.supabase.from("projeto").update(d).eq("id", id).select("id");
   if (error || !data?.length) return { erro: "Não foi possível salvar." };
   revalidar(id);
+  return { ok: true };
+}
+
+// Link do slide (Google Apresentações, Canva, OneDrive...). Vazio = remover.
+export async function salvarLinkSlide(projetoId: string, valor: string): Promise<Resultado> {
+  const s = await sessao();
+  const { link, erro } = lerLink(valor);
+  if (erro) return { erro };
+
+  const { data: projeto } = await s.supabase.from("projeto").select("status").eq("id", projetoId).maybeSingle();
+  if (!link && projeto?.status === "publicado") {
+    return { erro: "Projeto publicado precisa do link do slide. Troque o link, ou volte para rascunho antes de remover." };
+  }
+  const { data, error } = await s.supabase.from("projeto").update({ link_slide: link }).eq("id", projetoId).select("id");
+  if (error || !data?.length) return { erro: "Não foi possível salvar o link." };
+  revalidar(projetoId);
   return { ok: true };
 }
 
@@ -106,7 +109,12 @@ export async function definirStatus(id: string, status: string): Promise<Resulta
   if (!["rascunho", "publicado", "oculto"].includes(status)) return { erro: "Situação inválida." };
   if (status === "oculto" && s.perfil.funcao !== "professora") return { erro: "Só o professor pode ocultar." };
   if (status === "publicado") {
-    const faltam = await arquivosFaltando(s, id);
+    // Para publicar: documento em PDF + link do slide.
+    const [{ data: projeto }, { count }] = await Promise.all([
+      s.supabase.from("projeto").select("link_slide").eq("id", id).maybeSingle(),
+      s.supabase.from("documento").select("id", { count: "exact", head: true }).eq("projeto_id", id),
+    ]);
+    const faltam = [!count && "o documento em PDF", !projeto?.link_slide && "o link do slide"].filter(Boolean);
     if (faltam.length) return { erro: `Para publicar, envie ${faltam.join(" e ")}.` };
   }
 
@@ -132,37 +140,25 @@ export async function excluirProjeto(id: string): Promise<Resultado> {
   redirect(projeto ? `/painel/projetos?turma=${projeto.turma_id}` : "/painel/projetos");
 }
 
-// Chamado depois que o navegador enviou o arquivo (PDF ou slide) ao Storage.
-export async function salvarDocumento(
-  projetoId: string,
-  bimestre: number,
-  caminho: string,
-  formato: FormatoDocumento,
-): Promise<Resultado> {
+// Chamado depois que o navegador enviou o PDF ao Storage. 1 PDF por projeto.
+export async function salvarDocumento(projetoId: string, caminho: string): Promise<Resultado> {
   const s = await sessao();
-  if (!caminho.startsWith(`${projetoId}/`) || !FORMATOS.includes(formato)) return { erro: "Arquivo inválido." };
+  if (!caminho.startsWith(`${projetoId}/`) || !caminho.endsWith(".pdf")) return { erro: "Arquivo inválido." };
 
   const { data: antigo } = await s.supabase
     .from("documento")
     .select("arquivo")
     .eq("projeto_id", projetoId)
-    .eq("bimestre", bimestre)
-    .eq("formato", formato)
+    .eq("formato", "pdf")
     .maybeSingle();
 
   const { error } = await s.supabase
     .from("documento")
     .upsert(
-      { projeto_id: projetoId, bimestre, formato, arquivo: caminho, status: "publicado" },
-      { onConflict: "projeto_id,bimestre,formato" },
+      { projeto_id: projetoId, formato: "pdf", arquivo: caminho, status: "publicado" },
+      { onConflict: "projeto_id,formato" },
     );
-  if (error) {
-    return {
-      erro: error.message.includes("bimestre")
-        ? "O documento precisa ser do mesmo bimestre do projeto."
-        : "Não foi possível salvar o documento.",
-    };
-  }
+  if (error) return { erro: "Não foi possível salvar o documento." };
   // Substituição: apaga o arquivo anterior para economizar espaço.
   if (antigo?.arquivo && antigo.arquivo !== caminho) {
     await s.supabase.storage.from("documentos").remove([antigo.arquivo]);
@@ -172,23 +168,17 @@ export async function salvarDocumento(
   return {};
 }
 
-export async function removerDocumento(
-  projetoId: string,
-  bimestre: number,
-  formato: FormatoDocumento,
-): Promise<Resultado> {
+export async function removerDocumento(projetoId: string): Promise<Resultado> {
   const s = await sessao();
-  // Projeto publicado precisa dos 2 arquivos: dá para substituir, mas não remover.
+  // Projeto publicado precisa do PDF: dá para substituir, mas não remover.
   const { data: projeto } = await s.supabase.from("projeto").select("status").eq("id", projetoId).maybeSingle();
   if (projeto?.status === "publicado") {
-    return { erro: "Projeto publicado precisa dos 2 arquivos. Use Substituir, ou volte para rascunho antes de remover." };
+    return { erro: "Projeto publicado precisa do PDF. Use Substituir, ou volte para rascunho antes de remover." };
   }
   const { data: doc } = await s.supabase
     .from("documento")
     .select("id, arquivo")
     .eq("projeto_id", projetoId)
-    .eq("bimestre", bimestre)
-    .eq("formato", formato)
     .maybeSingle();
   if (!doc) return { erro: "Documento não encontrado." };
 

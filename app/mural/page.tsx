@@ -77,12 +77,12 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
   if (ano && serie && turma) {
     const r = await supabase
       .from("projeto")
-      .select("id, titulo, disciplina, bimestre, criado_por_nome, atualizado_por_nome, turma!inner(serie, nome, ano_letivo)")
+      .select("id, titulo, disciplina, semestre, criado_por_nome, atualizado_por_nome, turma!inner(serie, nome, ano_letivo)")
       .eq("status", "publicado")
       .eq("turma.ano_letivo", ano)
       .eq("turma.serie", serie)
       .eq("turma.nome", turma)
-      .order("bimestre")
+      .order("semestre")
       .order("criado_em", { ascending: false });
     projetos = r.data;
     erro = Boolean(r.error);
@@ -148,7 +148,7 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
                 >
                   <Card className="h-full transition group-hover:ring-foreground/30">
                     <CardHeader>
-                      <CardDescription>{p.bimestre}º bimestre</CardDescription>
+                      <CardDescription>{p.semestre}º semestre</CardDescription>
                       <CardTitle className="text-lg"><h2>{p.titulo}</h2></CardTitle>
                     </CardHeader>
                     {p.disciplina && (

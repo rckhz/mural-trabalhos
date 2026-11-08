@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { salvarDados } from "@/lib/acoes-projeto";
 import { classeCampo } from "@/lib/projetos";
 
-type Dados = { id: string; titulo: string; bimestre: number; disciplina: string | null; descricao: string | null };
+type Dados = { id: string; titulo: string; semestre: number; disciplina: string | null; descricao: string | null };
 
 export function FormDados({ projeto }: { projeto: Dados }) {
   const [estado, enviar, pendente] = useActionState(salvarDados, null);
@@ -27,9 +27,9 @@ export function FormDados({ projeto }: { projeto: Dados }) {
             <Input id="titulo" name="titulo" defaultValue={projeto.titulo} required minLength={3} maxLength={120} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="bimestre">Bimestre</Label>
-            <select id="bimestre" name="bimestre" defaultValue={String(projeto.bimestre)} className={classeCampo}>
-              {[1, 2, 3, 4].map((b) => <option key={b} value={b}>{b}º bimestre</option>)}
+            <Label htmlFor="semestre">Semestre</Label>
+            <select id="semestre" name="semestre" defaultValue={String(projeto.semestre)} className={classeCampo}>
+              {[1, 2].map((s) => <option key={s} value={s}>{s}º semestre</option>)}
             </select>
           </div>
           <div className="grid gap-1.5">

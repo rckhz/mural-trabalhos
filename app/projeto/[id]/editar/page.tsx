@@ -29,7 +29,7 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
   // O RLS só devolve o projeto se a pessoa puder vê-lo.
   const { data: projeto } = await supabase
     .from("projeto")
-    .select("id, titulo, descricao, disciplina, bimestre, status, turma_id, turma(serie, nome, ano_letivo)")
+    .select("id, titulo, descricao, disciplina, semestre, link_slide, status, turma_id, turma(serie, nome, ano_letivo)")
     .eq("id", id)
     .maybeSingle();
   if (!projeto) notFound();
@@ -39,33 +39,19 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
   const turma = projeto.turma as unknown as Turma;
   const voltar = professora ? `/painel/projetos?turma=${projeto.turma_id}` : "/sala";
 
-  // Um projeto = um bimestre = um documento (PDF) + um slide (PowerPoint).
-  const [{ data: docs }, { data: fotos }] = await Promise.all([
-    supabase
-      .from("documento")
-      .select("arquivo, formato, atualizado_em")
-      .eq("projeto_id", id)
-      .eq("bimestre", projeto.bimestre),
+  // Um projeto = um documento (PDF) + o link do slide + fotos.
+  const [{ data: doc }, { data: fotos }] = await Promise.all([
+    supabase.from("documento").select("arquivo, atualizado_em").eq("projeto_id", id).maybeSingle(),
     supabase.from("foto").select("id, arquivo").eq("projeto_id", id).order("atualizado_em"),
   ]);
-  const docPdf = docs?.find((d) => d.formato === "pdf");
-  const docSlide = docs?.find((d) => d.formato === "slide");
-  const [{ data: urlPdf }, { data: urlSlide }, { data: urlsFotos }] = await Promise.all([
-    docPdf
-      ? supabase.storage.from("documentos").createSignedUrl(docPdf.arquivo, UMA_HORA)
-      : Promise.resolve({ data: null }),
-    docSlide
-      ? supabase.storage.from("documentos").createSignedUrl(docSlide.arquivo, UMA_HORA, { download: true })
+  const [{ data: urlPdf }, { data: urlsFotos }] = await Promise.all([
+    doc
+      ? supabase.storage.from("documentos").createSignedUrl(doc.arquivo, UMA_HORA)
       : Promise.resolve({ data: null }),
     fotos?.length
       ? supabase.storage.from("fotos").createSignedUrls(fotos.map((f) => f.arquivo), UMA_HORA)
       : Promise.resolve({ data: [] as { signedUrl: string | null }[] }),
   ]);
-
-  const item = (doc: typeof docPdf, url: { signedUrl: string } | null) => ({
-    url: url?.signedUrl ?? null,
-    enviadoEm: doc ? formatarData(doc.atualizado_em) : null,
-  });
 
   return (
     <>
@@ -74,7 +60,7 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
         <Voltar href={voltar}>Projetos</Voltar>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm text-muted-foreground">{rotuloTurma(turma)} · {projeto.bimestre}º bimestre</p>
+            <p className="text-sm text-muted-foreground">{rotuloTurma(turma)} · {projeto.semestre}º semestre</p>
             <h1 className="text-2xl font-semibold tracking-tight">{projeto.titulo}</h1>
           </div>
           <Link href={`/projeto/${id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
@@ -92,9 +78,8 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
             <FormDados projeto={projeto} />
             <Documentos
               projetoId={id}
-              bimestre={projeto.bimestre}
-              pdf={item(docPdf, urlPdf)}
-              slide={item(docSlide, urlSlide)}
+              pdf={{ url: urlPdf?.signedUrl ?? null, enviadoEm: doc ? formatarData(doc.atualizado_em) : null }}
+              linkSlide={projeto.link_slide}
             />
             <Fotos
               projetoId={id}

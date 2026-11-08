@@ -15,9 +15,9 @@ export default async function ProjetosPainel({ searchParams }: { searchParams: P
   const { data: projetos } = sel
     ? await supabase
         .from("projeto")
-        .select("id, titulo, bimestre, status, disciplina")
+        .select("id, titulo, semestre, status, disciplina")
         .eq("turma_id", sel.id)
-        .order("bimestre")
+        .order("semestre")
         .order("criado_em")
     : { data: [] };
 

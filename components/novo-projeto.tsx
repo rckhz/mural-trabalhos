@@ -29,9 +29,9 @@ export function NovoProjeto({ turmas, turmaPadrao }: { turmas?: Turma[]; turmaPa
             <Input id="titulo" name="titulo" required minLength={3} maxLength={120} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="bimestre">Bimestre</Label>
-            <select id="bimestre" name="bimestre" defaultValue="1" className={classeCampo}>
-              {[1, 2, 3, 4].map((b) => <option key={b} value={b}>{b}º bimestre</option>)}
+            <Label htmlFor="semestre">Semestre</Label>
+            <select id="semestre" name="semestre" defaultValue="1" className={classeCampo}>
+              {[1, 2].map((s) => <option key={s} value={s}>{s}º semestre</option>)}
             </select>
           </div>
           <div className="grid gap-1.5">

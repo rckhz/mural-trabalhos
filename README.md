@@ -23,7 +23,7 @@ Mural
 Cada pasta mostra quantos projetos publicados há dentro dela. Ao abrir um projeto, a pessoa vê:
 
 - o **documento** (PDF) na própria página;
-- o botão para **baixar o slide** (PowerPoint);
+- o botão **Abrir slide**, que leva ao link da apresentação;
 - a **descrição** e as **fotos** do trabalho;
 - no rodapé, **quem criou** e **quem editou por último**. Esses nomes são gravados pelo sistema e ninguém consegue alterá-los.
 
@@ -39,12 +39,12 @@ Projetos em **rascunho** só são vistos pela própria sala e pelos professores.
 
 ### Cada projeto
 
-- Pertence a **uma turma** e a **um bimestre** (1º ao 4º).
-- Tem **2 arquivos obrigatórios** para ser publicado:
+- Pertence a **uma turma** e a **um semestre** (1º ou 2º). Em geral, cada grupo tem um projeto e vai atualizando ao longo do ano.
+- Precisa de **2 itens obrigatórios** para ser publicado:
   - **Documento em PDF** (até 5 MB): aparece na tela do mural;
-  - **Slide em PowerPoint** (.pptx, .ppt ou .odp, até 10 MB): fica disponível para baixar.
+  - **Link do slide** (Google Apresentações, Canva, OneDrive...). Como é só um link, **não ocupa espaço** no site. O slide precisa estar compartilhado como "qualquer pessoa com o link".
 - Pode ter fotos. O próprio site reduz cada foto antes de enviar, para no máximo 1 MB.
-- Os arquivos podem ser **substituídos** a qualquer momento ao longo do ano. A versão antiga é apagada para economizar espaço.
+- O PDF pode ser **substituído** a qualquer momento. A versão antiga é apagada para economizar espaço.
 
 ---
 
@@ -82,6 +82,12 @@ Bruno Lima; bruno.lima@email.com
 | **Remover** | Apaga a conta de vez. Os projetos continuam no mural. |
 
 Ninguém consegue remover a própria conta nem tirar o próprio acesso de administrador. Isso garante que o site nunca fique sem professor.
+
+### Armazenamento
+
+Na página inicial do painel, o quadro **Armazenamento** mostra quanto do espaço gratuito já foi usado: 1 GB para arquivos e 500 MB para o banco. A barra fica **amarela** a partir de 70% e **vermelha** a partir de 90%.
+
+Se aparecerem **arquivos soltos**, que são sobras de envios antigos que nenhum projeto usa mais, o botão **Limpar** apaga esses arquivos sem afetar nenhum projeto.
 
 ### Anos anteriores
 
@@ -129,7 +135,8 @@ Os arquivos em [supabase/migrations/](supabase/migrations/) devem ser rodados **
 | `20261108000000_projeto_por_bimestre.sql` | Cada projeto passa a pertencer a um bimestre |
 | `20261108010000_autoria_publica.sql` | Grava quem criou e quem editou por último |
 | `20261108020000_ano_2025.sql` | Cria o ano de 2025 com as 6 turmas |
-| `20261108030000_documento_e_slide.sql` | Documento em PDF + slide em PowerPoint por projeto |
+| `20261108030000_documento_e_slide.sql` | Documento + slide por projeto (substituída pela próxima) |
+| `20261108040000_semestre_link_medidor.sql` | Projeto por semestre, slide como link, 1 PDF por projeto e o medidor de armazenamento |
 
 **Primeiro professor** (só numa instalação nova):
 
@@ -186,7 +193,7 @@ proxy.ts                   renova a sessão de login a cada acesso
 
 | Limite (Supabase Free) | Como o site lida com isso |
 |---|---|
-| **1 GB** de arquivos | PDF até 5 MB, slide até 10 MB, fotos reduzidas para até 1 MB; substituir um arquivo apaga o antigo |
+| **1 GB** de arquivos | PDF até 5 MB, slide como link (0 MB), fotos reduzidas para até 1 MB; substituir um arquivo apaga o antigo; medidor no painel |
 | **Pausa após 7 dias sem uso** | Um acesso automático diário (Vercel Cron em [vercel.json](vercel.json)) mantém o projeto ativo |
 | Backups do plano gratuito não podem ser baixados | Recomenda-se guardar uma cópia do banco de tempos em tempos (por exemplo, com `pg_dump`) |
 

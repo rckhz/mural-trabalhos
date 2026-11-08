@@ -11,9 +11,9 @@ export default async function Sala() {
     supabase.from("turma").select("id, serie, nome, ano_letivo").eq("id", perfil.turma_id!).maybeSingle<Turma>(),
     supabase
       .from("projeto")
-      .select("id, titulo, bimestre, status, disciplina")
+      .select("id, titulo, semestre, status, disciplina")
       .eq("turma_id", perfil.turma_id!)
-      .order("bimestre")
+      .order("semestre")
       .order("criado_em"),
   ]);
 

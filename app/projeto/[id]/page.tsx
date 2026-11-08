@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, ExternalLink, Pencil, Presentation } from "lucide-react";
+import { ExternalLink, Pencil, Presentation } from "lucide-react";
 import { podeEditar } from "@/lib/projetos";
 import { sessaoAtual } from "@/lib/sessao";
 import { supabaseServidor } from "@/lib/supabase/servidor";
@@ -10,17 +10,13 @@ import { buttonVariants } from "@/components/ui/button";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UMA_HORA = 3600;
+
+// O banco já só aceita http(s), mas confere de novo antes de virar link na página.
+const linkSeguro = (link: string | null) => (link && /^https?:\/\//i.test(link) ? link : null);
 const data = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
-export default async function Projeto({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ b?: string }>;
-}) {
+export default async function Projeto({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { b } = await searchParams;
   if (!UUID.test(id)) notFound();
 
   const supabase = await supabaseServidor();
@@ -30,7 +26,7 @@ export default async function Projeto({
   const { data: projeto } = await supabase
     .from("projeto")
     .select(
-      "id, titulo, descricao, disciplina, bimestre, status, turma_id, criado_em, atualizado_em, criado_por_nome, atualizado_por_nome, turma(serie, nome, ano_letivo)",
+      "id, titulo, descricao, disciplina, semestre, link_slide, status, turma_id, criado_em, atualizado_em, criado_por_nome, atualizado_por_nome, turma(serie, nome, ano_letivo)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -40,25 +36,16 @@ export default async function Projeto({
   const s = await sessaoAtual();
   const editavel = s ? podeEditar(s.perfil, projeto) : false;
 
-  const [{ data: todosDocs }, { data: fotos }] = await Promise.all([
-    supabase
-      .from("documento")
-      .select("bimestre, arquivo, status, formato")
-      .eq("projeto_id", id)
-      .order("bimestre", { ascending: false }),
+  const [{ data: doc }, { data: fotos }] = await Promise.all([
+    supabase.from("documento").select("arquivo, status").eq("projeto_id", id).maybeSingle(),
     supabase.from("foto").select("id, arquivo, legenda").eq("projeto_id", id).order("atualizado_em"),
   ]);
 
-  // O documento (PDF) é mostrado na tela; o slide (PowerPoint) fica para baixar.
-  const docs = todosDocs?.filter((d) => d.formato === "pdf");
-  const atual = docs?.find((d) => String(d.bimestre) === b) ?? docs?.[0];
-  const slide = todosDocs?.find((d) => d.formato === "slide" && d.bimestre === (atual?.bimestre ?? projeto.bimestre));
-  const [{ data: urlDoc }, { data: urlSlide }, { data: urlsFotos }] = await Promise.all([
-    atual
-      ? supabase.storage.from("documentos").createSignedUrl(atual.arquivo, UMA_HORA)
-      : Promise.resolve({ data: null }),
-    slide
-      ? supabase.storage.from("documentos").createSignedUrl(slide.arquivo, UMA_HORA, { download: true })
+  // O documento (PDF) aparece na tela; o slide é um link externo.
+  const slide = linkSeguro(projeto.link_slide);
+  const [{ data: urlDoc }, { data: urlsFotos }] = await Promise.all([
+    doc
+      ? supabase.storage.from("documentos").createSignedUrl(doc.arquivo, UMA_HORA)
       : Promise.resolve({ data: null }),
     fotos?.length
       ? supabase.storage.from("fotos").createSignedUrls(fotos.map((f) => f.arquivo), UMA_HORA)
@@ -77,71 +64,48 @@ export default async function Projeto({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <span>{t.serie}º {t.nome} · {t.ano_letivo} · {projeto.bimestre}º bimestre</span>
+        <span>{t.serie}º {t.nome} · {t.ano_letivo} · {projeto.semestre}º semestre</span>
         {projeto.disciplina && <Badge variant="secondary">{projeto.disciplina}</Badge>}
         {projeto.status !== "publicado" && <Badge variant="outline">{projeto.status}</Badge>}
       </div>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{projeto.titulo}</h1>
 
+      {slide && (
+        <a
+          href={slide}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline" }) + " mt-4"}
+        >
+          <Presentation />Abrir slide <ExternalLink />
+        </a>
+      )}
+
       <section className="mt-8" aria-labelledby="titulo-doc">
         <h2 id="titulo-doc" className="mb-3 text-lg font-medium">Documento</h2>
-        {!atual ? (
+        {!doc ? (
+          <p className="text-muted-foreground">Nenhum documento enviado ainda.</p>
+        ) : urlDoc?.signedUrl ? (
           <>
-            <p className="text-muted-foreground">Nenhum documento enviado ainda.</p>
-            {urlSlide?.signedUrl && (
-              <a href={urlSlide.signedUrl} className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-3"}>
-                <Presentation />Baixar slide (PowerPoint)
+            <iframe
+              className="h-[70vh] max-h-[720px] w-full rounded-xl border bg-card"
+              src={urlDoc.signedUrl}
+              title={`Documento: ${projeto.titulo}`}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <a
+                href={urlDoc.signedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "link" }) + " px-0"}
+              >
+                Abrir documento em tela cheia <ExternalLink />
               </a>
-            )}
+              {doc.status !== "publicado" && <Badge variant="outline">{doc.status}</Badge>}
+            </div>
           </>
         ) : (
-          <>
-            {docs!.length > 1 && (
-              <nav className="mb-3 flex flex-wrap gap-2" aria-label="Bimestres">
-                {docs!.map((d) => {
-                  const ativo = d.bimestre === atual.bimestre;
-                  return (
-                    <Link
-                      key={d.bimestre}
-                      href={`/projeto/${id}?b=${d.bimestre}`}
-                      scroll={false}
-                      aria-current={ativo ? "page" : undefined}
-                      className={buttonVariants({ variant: ativo ? "default" : "outline", size: "sm" })}
-                    >
-                      {d.bimestre}º bimestre
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
-            {urlDoc?.signedUrl ? (
-              <>
-                <iframe
-                  className="h-[70vh] max-h-[720px] w-full rounded-xl border bg-card"
-                  src={urlDoc.signedUrl}
-                  title={`Documento do ${atual.bimestre}º bimestre`}
-                />
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <a
-                    href={urlDoc.signedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={buttonVariants({ variant: "link" }) + " px-0"}
-                  >
-                    Abrir documento em tela cheia <ExternalLink />
-                  </a>
-                  {urlSlide?.signedUrl && (
-                    <a href={urlSlide.signedUrl} className={buttonVariants({ variant: "outline", size: "sm" })}>
-                      <Presentation />Baixar slide (PowerPoint) <Download />
-                    </a>
-                  )}
-                  {atual.status !== "publicado" && <Badge variant="outline">{atual.status}</Badge>}
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground">Não foi possível abrir o documento.</p>
-            )}
-          </>
+          <p className="text-muted-foreground">Não foi possível abrir o documento.</p>
         )}
       </section>
 
