@@ -119,6 +119,13 @@
   }
 }
 
+/* Ao imprimir a lista de senhas, só o bloco #impressao aparece. */
+@media print {
+  body * { visibility: hidden; }
+  #impressao, #impressao * { visibility: visible; color: #000 !important; }
+  #impressao { position: absolute; top: 0; left: 0; width: 100%; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
