@@ -16,6 +16,27 @@ const senhaPadrao = (email: string) => {
 async function garantirProfessora() {
   const s = await sessaoAtual();
   if (s?.perfil.funcao !== "professora") throw new Error("Acesso negado");
+  return s;
+}
+
+// Liga/desliga o acesso de administrador (mesma função da conta principal).
+export async function definirAdmin(userId: string, admin: boolean): Promise<{ erro?: string }> {
+  const s = await garantirProfessora();
+  if (userId === s.user.id) return { erro: "Você não pode alterar o seu próprio acesso." };
+
+  const supa = supabaseAdmin();
+  const { data: alvo } = await supa.from("perfil").select("turma_id").eq("id", userId).maybeSingle();
+  if (!alvo) return { erro: "Conta não encontrada." };
+  // Aluno precisa de turma; uma conta sem turma (como a principal) não pode virar aluno.
+  if (!admin && !alvo.turma_id) return { erro: "Esta conta não tem turma, então não pode virar aluno." };
+
+  const { error } = await supa
+    .from("perfil")
+    .update({ funcao: admin ? "professora" : "aluno" })
+    .eq("id", userId);
+  if (error) return { erro: "Não foi possível alterar o acesso." };
+  revalidatePath("/painel/alunos");
+  return {};
 }
 
 async function ehAluno(userId: string) {

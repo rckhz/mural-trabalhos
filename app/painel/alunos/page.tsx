@@ -3,20 +3,23 @@ import { CabecalhoArea } from "@/components/cabecalho-area";
 import { Voltar } from "@/components/voltar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { exigir } from "@/lib/sessao";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { AcoesAluno } from "./acoes-aluno";
 import { CadastroAlunos } from "./cadastro";
+import { InterruptorAdmin } from "./interruptor-admin";
 
 // Cadastro em lote cria várias contas seguidas; dá tempo de sobra.
 export const maxDuration = 60;
 
 type Turma = { id: string; serie: number; nome: string; ano_letivo: number };
+type Conta = { id: string; nome: string; funcao: "professora" | "aluno"; ativo: boolean; deve_trocar_senha: boolean };
 const rotulo = (t: Turma) => `${t.serie}º ${t.nome} · ${t.ano_letivo}`;
+const CAMPOS = "id, nome, funcao, ativo, deve_trocar_senha";
 
 export default async function Alunos({ searchParams }: { searchParams: Promise<{ turma?: string }> }) {
-  const { supabase, perfil } = await exigir("professora");
+  const { supabase, perfil, user } = await exigir("professora");
   const { turma } = await searchParams;
 
   const { data: turmas } = await supabase
@@ -29,17 +32,14 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
   const lista = turmas ?? [];
   const sel = lista.find((t) => t.id === turma) ?? lista[0];
 
-  const { data: alunos } = sel
-    ? await supabase
-        .from("perfil")
-        .select("id, nome, ativo, deve_trocar_senha")
-        .eq("funcao", "aluno")
-        .eq("turma_id", sel.id)
-        .order("nome")
-    : { data: [] };
-
-  // O e-mail fica no Auth, não na tabela perfil.
-  const { data: usuarios } = await supabaseAdmin().auth.admin.listUsers({ perPage: 1000 });
+  const [{ data: membros }, { data: admins }, { data: usuarios }] = await Promise.all([
+    sel
+      ? supabase.from("perfil").select(CAMPOS).eq("turma_id", sel.id).order("nome").returns<Conta[]>()
+      : Promise.resolve({ data: [] as Conta[] }),
+    supabase.from("perfil").select(CAMPOS).eq("funcao", "professora").order("nome").returns<Conta[]>(),
+    // O e-mail fica no Auth, não na tabela perfil.
+    supabaseAdmin().auth.admin.listUsers({ perPage: 1000 }),
+  ]);
   const emailPorId = new Map((usuarios?.users ?? []).map((u) => [u.id, u.email ?? ""]));
 
   return (
@@ -66,27 +66,31 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
-                <h2>{sel ? rotulo(sel) : "Nenhuma turma"} · {alunos?.length ?? 0} alunos</h2>
+                <h2>{sel ? rotulo(sel) : "Nenhuma turma"} · {membros?.length ?? 0} contas</h2>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!alunos?.length ? (
+              {!membros?.length ? (
                 <p className="text-muted-foreground">Nenhum aluno cadastrado nesta turma ainda.</p>
               ) : (
                 <ul className="divide-y">
-                  {alunos.map((a) => (
-                    <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                      <div className="min-w-0">
-                        <p className="font-medium">
-                          {a.nome}
-                          {!a.ativo && <Badge variant="destructive" className="ml-2">desativado</Badge>}
-                          {a.ativo && a.deve_trocar_senha && (
-                            <Badge variant="secondary" className="ml-2">aguardando 1º acesso</Badge>
-                          )}
-                        </p>
-                        <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
+                  {membros.map((a) => (
+                    <li key={a.id} className="grid gap-2 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-medium">
+                            {a.nome}
+                            {a.funcao === "professora" && <Badge className="ml-2">administrador</Badge>}
+                            {!a.ativo && <Badge variant="destructive" className="ml-2">desativado</Badge>}
+                            {a.ativo && a.deve_trocar_senha && (
+                              <Badge variant="secondary" className="ml-2">aguardando 1º acesso</Badge>
+                            )}
+                          </p>
+                          <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
+                        </div>
+                        {a.funcao === "aluno" && <AcoesAluno id={a.id} ativo={a.ativo} />}
                       </div>
-                      <AcoesAluno id={a.id} ativo={a.ativo} />
+                      <InterruptorAdmin id={a.id} admin={a.funcao === "professora"} bloqueado={a.id === user.id} />
                     </li>
                   ))}
                 </ul>
@@ -100,6 +104,31 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
             turmaPadrao={sel?.id}
           />
         </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg"><h2>Administradores</h2></CardTitle>
+            <CardDescription>
+              Contas com acesso total ao painel. Para dar acesso a alguém, ligue o interruptor na lista da turma.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y">
+              {(admins ?? []).map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">
+                      {a.nome}
+                      {a.id === user.id && <Badge variant="secondary" className="ml-2">você</Badge>}
+                    </p>
+                    <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
+                  </div>
+                  <InterruptorAdmin id={a.id} admin bloqueado={a.id === user.id} />
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       </main>
     </>
   );
