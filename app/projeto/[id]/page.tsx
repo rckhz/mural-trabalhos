@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pencil } from "lucide-react";
+import { podeEditar } from "@/lib/projetos";
+import { sessaoAtual } from "@/lib/sessao";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import { Voltar } from "@/components/voltar";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +28,13 @@ export default async function Projeto({
   // aluno da sala e professora também veem rascunhos.
   const { data: projeto } = await supabase
     .from("projeto")
-    .select("id, titulo, descricao, disciplina, semestre, status, turma(serie, nome, ano_letivo)")
+    .select("id, titulo, descricao, disciplina, semestre, status, turma_id, turma(serie, nome, ano_letivo)")
     .eq("id", id)
     .maybeSingle();
   if (!projeto) notFound();
+
+  const s = await sessaoAtual();
+  const editavel = s ? podeEditar(s.perfil, projeto) : false;
 
   const [{ data: docs }, { data: fotos }] = await Promise.all([
     supabase
@@ -54,7 +59,14 @@ export default async function Projeto({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-      <Voltar href="/mural">Voltar ao mural</Voltar>
+      <div className="flex items-start justify-between gap-2">
+        <Voltar href="/mural">Voltar ao mural</Voltar>
+        {editavel && (
+          <Link href={`/projeto/${id}/editar`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Pencil />Editar
+          </Link>
+        )}
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <span>{t.serie}º {t.nome} · {t.ano_letivo} · {projeto.semestre}º semestre</span>

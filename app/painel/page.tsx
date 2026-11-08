@@ -6,7 +6,7 @@ import { exigir } from "@/lib/sessao";
 
 const secoes = [
   { href: "/painel/alunos", Icone: Users, titulo: "Alunos", texto: "Cadastrar, gerar nova senha e desativar contas" },
-  { href: null, Icone: FolderKanban, titulo: "Projetos", texto: "Em breve: criar, publicar e ocultar projetos" },
+  { href: "/painel/projetos", Icone: FolderKanban, titulo: "Projetos", texto: "Criar, publicar e ocultar projetos das turmas" },
 ];
 
 export default async function Painel() {
