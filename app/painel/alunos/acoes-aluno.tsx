@@ -9,7 +9,7 @@ export function AcoesAluno({ id, ativo }: { id: string; ativo: boolean }) {
   const [pendente, iniciar] = useTransition();
 
   const gerarSenha = () => {
-    if (!confirm("Gerar uma nova senha? A senha atual deste aluno deixa de funcionar.")) return;
+    if (!confirm("Voltar a senha deste aluno para a inicial (o que vem antes do @)? A senha atual deixa de funcionar.")) return;
     iniciar(async () => {
       const r = await novaSenha(id);
       setMensagem(r.senha ? `Nova senha: ${r.senha}` : (r.erro ?? null));
@@ -25,7 +25,7 @@ export function AcoesAluno({ id, ativo }: { id: string; ativo: boolean }) {
     <div className="flex flex-wrap items-center justify-end gap-2">
       {mensagem && <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{mensagem}</code>}
       <Button size="sm" variant="outline" disabled={pendente || !ativo} onClick={gerarSenha}>
-        Nova senha
+        Redefinir senha
       </Button>
       <Button size="sm" variant={ativo ? "destructive" : "secondary"} disabled={pendente} onClick={alternar}>
         {ativo ? "Desativar" : "Reativar"}

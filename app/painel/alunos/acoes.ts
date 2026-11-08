@@ -1,15 +1,17 @@
 "use server";
 
-import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sessaoAtual } from "@/lib/sessao";
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALFABETO = "abcdefghjkmnpqrstuvwxyz23456789"; // sem 0/o, 1/l/i para não confundir
 
-const senhaTemporaria = () =>
-  Array.from({ length: 8 }, () => ALFABETO[randomInt(ALFABETO.length)]).join("");
+// Senha inicial = parte do e-mail antes do @. O Supabase exige no mínimo 6 caracteres,
+// então nomes curtos são completados com números: "ana" → "ana123".
+const senhaPadrao = (email: string) => {
+  const base = email.split("@")[0].toLowerCase();
+  return base.length >= 6 ? base : base + "123456".slice(0, 6 - base.length);
+};
 
 async function garantirProfessora() {
   const s = await sessaoAtual();
@@ -52,7 +54,7 @@ export async function cadastrarAlunos(_: EstadoCadastro, form: FormData): Promis
       resultado.push({ nome, email, erro: "Linha inválida (use: Nome; e-mail)" });
       continue;
     }
-    const senha = senhaTemporaria();
+    const senha = senhaPadrao(email);
     // email_confirm: a conta já nasce confirmada; nenhum e-mail é enviado.
     const { data, error } = await admin.auth.admin.createUser({ email, password: senha, email_confirm: true });
     if (error || !data.user) {
@@ -83,7 +85,9 @@ export async function novaSenha(userId: string): Promise<{ senha?: string; erro?
   if (!(await ehAluno(userId))) return { erro: "Aluno não encontrado" };
 
   const admin = supabaseAdmin();
-  const senha = senhaTemporaria();
+  const { data: usuario } = await admin.auth.admin.getUserById(userId);
+  if (!usuario.user?.email) return { erro: "Aluno não encontrado" };
+  const senha = senhaPadrao(usuario.user.email);
   const { error } = await admin.auth.admin.updateUserById(userId, { password: senha });
   if (error) return { erro: "Não foi possível gerar a senha" };
   await admin.from("perfil").update({ deve_trocar_senha: true }).eq("id", userId);

@@ -22,7 +22,7 @@ export function CadastroAlunos({
 
   const copiar = () =>
     navigator.clipboard.writeText(
-      ["Nome\tE-mail\tSenha temporária", ...criados.map((r) => `${r.nome}\t${r.email}\t${r.senha}`)].join("\n"),
+      ["Nome\tE-mail\tSenha inicial", ...criados.map((r) => `${r.nome}\t${r.email}\t${r.senha}`)].join("\n"),
     );
 
   return (
@@ -31,6 +31,7 @@ export function CadastroAlunos({
         <CardTitle className="text-lg"><h2>Cadastrar alunos</h2></CardTitle>
         <CardDescription>
           Uma linha por aluno, no formato <code>Nome; e-mail</code>. Também dá para colar duas colunas de uma planilha.
+          A senha inicial é o que vem antes do @ (no mínimo 6 caracteres, completando com números).
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -62,7 +63,7 @@ export function CadastroAlunos({
         {!!estado?.resultado.length && (
           <div id="impressao" className="mt-6 grid gap-3">
             <p className="text-sm font-medium">
-              Anote ou imprima agora: as senhas temporárias não aparecem de novo.
+              No primeiro acesso, cada aluno entra com a senha abaixo e cria uma senha própria.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
