@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { exigir } from "@/lib/sessao";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { AcoesAluno } from "./acoes-aluno";
+import { BotaoRemover } from "./botao-remover";
 import { CadastroAlunos } from "./cadastro";
 import { InterruptorAdmin } from "./interruptor-admin";
 
@@ -88,7 +89,10 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
                           </p>
                           <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
                         </div>
-                        {a.funcao === "aluno" && <AcoesAluno id={a.id} ativo={a.ativo} />}
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {a.funcao === "aluno" && <AcoesAluno id={a.id} ativo={a.ativo} />}
+                          {a.id !== user.id && <BotaoRemover id={a.id} nome={a.nome} />}
+                        </div>
                       </div>
                       <InterruptorAdmin id={a.id} admin={a.funcao === "professora"} bloqueado={a.id === user.id} />
                     </li>
@@ -123,7 +127,10 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
                     </p>
                     <p className="truncate text-sm text-muted-foreground">{emailPorId.get(a.id)}</p>
                   </div>
-                  <InterruptorAdmin id={a.id} admin bloqueado={a.id === user.id} />
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <InterruptorAdmin id={a.id} admin bloqueado={a.id === user.id} />
+                    {a.id !== user.id && <BotaoRemover id={a.id} nome={a.nome} />}
+                  </div>
                 </li>
               ))}
             </ul>

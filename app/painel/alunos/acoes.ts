@@ -19,6 +19,18 @@ async function garantirProfessora() {
   return s;
 }
 
+// Apaga a conta de vez (login + perfil, que cai junto por "on delete cascade").
+// Projetos e documentos continuam; só a autoria vira vazia.
+export async function removerConta(userId: string): Promise<{ erro?: string }> {
+  const s = await garantirProfessora();
+  if (userId === s.user.id) return { erro: "Você não pode remover a própria conta." };
+
+  const { error } = await supabaseAdmin().auth.admin.deleteUser(userId);
+  if (error) return { erro: "Não foi possível remover a conta." };
+  revalidatePath("/painel/alunos");
+  return {};
+}
+
 // Liga/desliga o acesso de administrador (mesma função da conta principal).
 export async function definirAdmin(userId: string, admin: boolean): Promise<{ erro?: string }> {
   const s = await garantirProfessora();
