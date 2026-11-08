@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import { supabaseServidor } from "@/lib/supabase/servidor";
+import { Voltar } from "@/components/voltar";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UMA_HORA = 3600;
@@ -49,73 +53,88 @@ export default async function Projeto({
   const t = projeto.turma as unknown as { serie: number; nome: string; ano_letivo: number };
 
   return (
-    <main className="pagina">
-      <Link href="/mural" className="voltar">← Voltar ao mural</Link>
-      <p className="meta">
-        {t.serie}º {t.nome} · {t.ano_letivo} · {projeto.semestre}º semestre
-        {projeto.disciplina && ` · ${projeto.disciplina}`}
-        {projeto.status !== "publicado" && <span className="selo">{projeto.status}</span>}
-      </p>
-      <h1>{projeto.titulo}</h1>
+    <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
+      <Voltar href="/mural">Voltar ao mural</Voltar>
 
-      <section className="secao" aria-labelledby="titulo-doc">
-        <h2 id="titulo-doc">Documento</h2>
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <span>{t.serie}º {t.nome} · {t.ano_letivo} · {projeto.semestre}º semestre</span>
+        {projeto.disciplina && <Badge variant="secondary">{projeto.disciplina}</Badge>}
+        {projeto.status !== "publicado" && <Badge variant="outline">{projeto.status}</Badge>}
+      </div>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{projeto.titulo}</h1>
+
+      <section className="mt-8" aria-labelledby="titulo-doc">
+        <h2 id="titulo-doc" className="mb-3 text-lg font-medium">Documento</h2>
         {!atual ? (
-          <p className="meta">Nenhum documento enviado ainda.</p>
+          <p className="text-muted-foreground">Nenhum documento enviado ainda.</p>
         ) : (
           <>
             {docs!.length > 1 && (
-              <nav className="abas" aria-label="Bimestres">
-                {docs!.map((d) => (
-                  <Link
-                    key={d.bimestre}
-                    href={`/projeto/${id}?b=${d.bimestre}`}
-                    scroll={false}
-                    aria-current={d.bimestre === atual.bimestre ? "page" : undefined}
-                  >
-                    {d.bimestre}º bimestre
-                  </Link>
-                ))}
+              <nav className="mb-3 flex flex-wrap gap-2" aria-label="Bimestres">
+                {docs!.map((d) => {
+                  const ativo = d.bimestre === atual.bimestre;
+                  return (
+                    <Link
+                      key={d.bimestre}
+                      href={`/projeto/${id}?b=${d.bimestre}`}
+                      scroll={false}
+                      aria-current={ativo ? "page" : undefined}
+                      className={buttonVariants({ variant: ativo ? "default" : "outline", size: "sm" })}
+                    >
+                      {d.bimestre}º bimestre
+                    </Link>
+                  );
+                })}
               </nav>
             )}
             {urlDoc?.signedUrl ? (
               <>
                 <iframe
-                  className="pdf"
+                  className="h-[70vh] max-h-[720px] w-full rounded-xl border bg-card"
                   src={urlDoc.signedUrl}
                   title={`Documento do ${atual.bimestre}º bimestre`}
                 />
-                <p>
-                  <a href={urlDoc.signedUrl} target="_blank" rel="noopener noreferrer">
-                    Abrir documento em tela cheia
+                <div className="mt-2 flex items-center gap-2">
+                  <a
+                    href={urlDoc.signedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonVariants({ variant: "link" }) + " px-0"}
+                  >
+                    Abrir documento em tela cheia <ExternalLink />
                   </a>
-                  {atual.status !== "publicado" && <span className="selo">{atual.status}</span>}
-                </p>
+                  {atual.status !== "publicado" && <Badge variant="outline">{atual.status}</Badge>}
+                </div>
               </>
             ) : (
-              <p className="meta">Não foi possível abrir o documento.</p>
+              <p className="text-muted-foreground">Não foi possível abrir o documento.</p>
             )}
           </>
         )}
       </section>
 
-      {(projeto.descricao || fotos?.length) && (
-        <section className="secao" aria-labelledby="titulo-sobre">
-          <h2 id="titulo-sobre">Sobre o trabalho</h2>
-          {projeto.descricao && <p className="descricao">{projeto.descricao}</p>}
+      {(projeto.descricao || !!fotos?.length) && (
+        <section className="mt-10" aria-labelledby="titulo-sobre">
+          <h2 id="titulo-sobre" className="mb-3 text-lg font-medium">Sobre o trabalho</h2>
+          {projeto.descricao && <p className="whitespace-pre-line leading-relaxed">{projeto.descricao}</p>}
           {!!fotos?.length && (
-            <ul className="galeria">
+            <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {fotos.map((f, i) => {
                 const url = urlsFotos?.[i]?.signedUrl;
                 if (!url) return null;
                 return (
                   <li key={f.id}>
-                    <figure style={{ margin: 0 }}>
-                      <a href={url} target="_blank" rel="noopener noreferrer">
+                    <figure>
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt={f.legenda || "Foto do trabalho"} loading="lazy" />
+                        <img
+                          src={url}
+                          alt={f.legenda || "Foto do trabalho"}
+                          loading="lazy"
+                          className="aspect-4/3 w-full object-cover transition hover:scale-105"
+                        />
                       </a>
-                      {f.legenda && <figcaption>{f.legenda}</figcaption>}
+                      {f.legenda && <figcaption className="mt-1 text-sm text-muted-foreground">{f.legenda}</figcaption>}
                     </figure>
                   </li>
                 );

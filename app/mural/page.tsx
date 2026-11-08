@@ -1,8 +1,35 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { supabaseServidor } from "@/lib/supabase/servidor";
+import { Voltar } from "@/components/voltar";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Params = Promise<Record<string, string | string[] | undefined>>;
 const um = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
+// <select> nativo: no celular abre o seletor do próprio sistema, mais fácil de usar.
+const classeSelect =
+  "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
+
+function Filtro({ rotulo, nome, valor, opcoes }: {
+  rotulo: string;
+  nome: string;
+  valor: string;
+  opcoes: [string, string][];
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={nome}>{rotulo}</Label>
+      <select id={nome} name={nome} defaultValue={valor} className={classeSelect}>
+        {opcoes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      </select>
+    </div>
+  );
+}
 
 export default async function Mural({ searchParams }: { searchParams: Params }) {
   const sp = await searchParams;
@@ -41,77 +68,69 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
   const filtrando = Boolean(f.serie || f.turma || f.semestre || f.disciplina || f.q || (f.ano && f.ano !== anoPadrao));
 
   return (
-    <main className="pagina">
-      <Link href="/" className="voltar">← Início</Link>
-      <h1>Mural de projetos</h1>
-      <p className="subtitulo">Os mais recentes aparecem primeiro.</p>
+    <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
+      <Voltar href="/">Início</Voltar>
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Mural de projetos</h1>
+      <p className="mt-1 text-muted-foreground">Os mais recentes aparecem primeiro.</p>
 
-      <form className="filtros" action="/mural" role="search">
-        <label className="busca">
-          Buscar
-          <input type="search" name="q" defaultValue={f.q} placeholder="Título ou descrição" />
-        </label>
-        <label>
-          Ano letivo
-          <select name="ano" defaultValue={ano}>
-            <option value="todos">Todos</option>
-            {anos?.map((a) => <option key={a.ano} value={a.ano}>{a.ano}</option>)}
-          </select>
-        </label>
-        <label>
-          Série
-          <select name="serie" defaultValue={f.serie}>
-            <option value="">Todas</option>
-            <option value="1">1º ano</option>
-            <option value="2">2º ano</option>
-            <option value="3">3º ano</option>
-          </select>
-        </label>
-        <label>
-          Turma
-          <select name="turma" defaultValue={f.turma}>
-            <option value="">Todas</option>
-            <option value="MIL">MIL</option>
-            <option value="MIN">MIN</option>
-          </select>
-        </label>
-        <label>
-          Semestre
-          <select name="semestre" defaultValue={f.semestre}>
-            <option value="">Todos</option>
-            <option value="1">1º semestre</option>
-            <option value="2">2º semestre</option>
-          </select>
-        </label>
-        {disciplinas.length > 0 && (
-          <label>
-            Disciplina
-            <select name="disciplina" defaultValue={f.disciplina}>
-              <option value="">Todas</option>
-              {disciplinas.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </label>
-        )}
-        <div className="acoes">
-          <button className="botao" type="submit">Filtrar</button>
-          {filtrando && <Link href="/mural">Limpar filtros</Link>}
-        </div>
-      </form>
+      <Card className="mt-6">
+        <CardContent>
+          <form action="/mural" role="search" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="grid gap-1.5 sm:col-span-2">
+              <Label htmlFor="q">Buscar</Label>
+              <Input id="q" type="search" name="q" defaultValue={f.q} placeholder="Título ou descrição" />
+            </div>
+            <Filtro rotulo="Ano letivo" nome="ano" valor={ano}
+              opcoes={[["todos", "Todos"], ...(anos ?? []).map((a): [string, string] => [String(a.ano), String(a.ano)])]} />
+            <Filtro rotulo="Série" nome="serie" valor={f.serie}
+              opcoes={[["", "Todas"], ["1", "1º ano"], ["2", "2º ano"], ["3", "3º ano"]]} />
+            <Filtro rotulo="Turma" nome="turma" valor={f.turma}
+              opcoes={[["", "Todas"], ["MIL", "MIL"], ["MIN", "MIN"]]} />
+            <Filtro rotulo="Semestre" nome="semestre" valor={f.semestre}
+              opcoes={[["", "Todos"], ["1", "1º semestre"], ["2", "2º semestre"]]} />
+            {disciplinas.length > 0 && (
+              <Filtro rotulo="Disciplina" nome="disciplina" valor={f.disciplina}
+                opcoes={[["", "Todas"], ...disciplinas.map((d): [string, string] => [d, d])]} />
+            )}
+            <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-6">
+              <Button type="submit"><Search />Filtrar</Button>
+              {filtrando && (
+                <Link href="/mural" className={buttonVariants({ variant: "ghost" })}>Limpar filtros</Link>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {error ? (
-        <p className="vazio">Não foi possível carregar o mural. Tente novamente em instantes.</p>
+        <p className="py-12 text-center text-muted-foreground">
+          Não foi possível carregar o mural. Tente novamente em instantes.
+        </p>
       ) : !projetos?.length ? (
-        <p className="vazio">Nenhum projeto encontrado{filtrando ? " com esses filtros" : " ainda"}.</p>
+        <p className="py-12 text-center text-muted-foreground">
+          Nenhum projeto encontrado{filtrando ? " com esses filtros" : " ainda"}.
+        </p>
       ) : (
-        <ul className="cards">
+        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projetos.map((p) => {
             const t = p.turma as unknown as { serie: number; nome: string };
             return (
               <li key={p.id}>
-                <Link href={`/projeto/${p.id}`} className="card">
-                  <span className="meta">{t.serie}º {t.nome} · {p.semestre}º semestre</span>
-                  <h2>{p.titulo}</h2>
-                  {p.disciplina && <span className="tag">{p.disciplina}</span>}
+                <Link
+                  href={`/projeto/${p.id}`}
+                  className="group block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <Card className="h-full transition group-hover:ring-foreground/30">
+                    <CardHeader>
+                      <CardDescription>{t.serie}º {t.nome} · {p.semestre}º semestre</CardDescription>
+                      <CardTitle className="text-lg"><h2>{p.titulo}</h2></CardTitle>
+                    </CardHeader>
+                    {p.disciplina && (
+                      <CardContent className="mt-auto">
+                        <Badge variant="secondary">{p.disciplina}</Badge>
+                      </CardContent>
+                    )}
+                  </Card>
                 </Link>
               </li>
             );
