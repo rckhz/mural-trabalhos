@@ -24,7 +24,8 @@ function revalidar(id: string) {
 function lerDados(form: FormData) {
   return {
     titulo: String(form.get("titulo") ?? "").trim(),
-    semestre: Number(form.get("semestre")),
+    // O semestre é preenchido pelo banco a partir do bimestre.
+    bimestre: Number(form.get("bimestre")),
     disciplina: String(form.get("disciplina") ?? "").trim() || null,
     descricao: String(form.get("descricao") ?? "").trim() || null,
   };
@@ -32,7 +33,7 @@ function lerDados(form: FormData) {
 
 function validar(d: ReturnType<typeof lerDados>) {
   if (d.titulo.length < 3 || d.titulo.length > 120) return "O título precisa ter entre 3 e 120 caracteres.";
-  if (d.semestre !== 1 && d.semestre !== 2) return "Escolha o semestre.";
+  if (![1, 2, 3, 4].includes(d.bimestre)) return "Escolha o bimestre.";
   if (d.descricao && d.descricao.length > 3000) return "A descrição pode ter no máximo 3000 caracteres.";
   return null;
 }
@@ -48,7 +49,7 @@ export async function criarProjeto(_: string | null, form: FormData): Promise<st
 
   const { data, error } = await s.supabase
     .from("projeto")
-    .insert({ titulo: d.titulo, semestre: d.semestre, disciplina: d.disciplina, turma_id: turmaId })
+    .insert({ titulo: d.titulo, bimestre: d.bimestre, disciplina: d.disciplina, turma_id: turmaId })
     .select("id")
     .single();
   if (error || !data) return "Não foi possível criar o projeto.";
@@ -62,14 +63,14 @@ export async function salvarDados(_: Resultado | null, form: FormData): Promise<
   const erro = validar(d);
   if (erro) return { erro };
 
-  const { data: atual } = await s.supabase.from("projeto").select("semestre").eq("id", id).maybeSingle();
+  const { data: atual } = await s.supabase.from("projeto").select("bimestre").eq("id", id).maybeSingle();
   if (!atual) return { erro: "Projeto não encontrado." };
-  if (atual.semestre !== d.semestre) {
+  if (atual.bimestre !== d.bimestre) {
     const { count } = await s.supabase
       .from("documento")
       .select("id", { count: "exact", head: true })
       .eq("projeto_id", id);
-    if (count) return { erro: "Não dá para mudar o semestre de um projeto que já tem documentos." };
+    if (count) return { erro: "Não dá para mudar o bimestre de um projeto que já tem documento enviado." };
   }
 
   const { data, error } = await s.supabase.from("projeto").update(d).eq("id", id).select("id");
@@ -123,7 +124,7 @@ export async function salvarDocumento(projetoId: string, bimestre: number, camin
   if (error) {
     return {
       erro: error.message.includes("bimestre")
-        ? "Este bimestre não pertence ao semestre do projeto."
+        ? "O documento precisa ser do mesmo bimestre do projeto."
         : "Não foi possível salvar o documento.",
     };
   }

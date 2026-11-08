@@ -37,7 +37,7 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
     ano: um(sp.ano),
     serie: um(sp.serie),
     turma: um(sp.turma),
-    semestre: um(sp.semestre),
+    bimestre: um(sp.bimestre),
     disciplina: um(sp.disciplina),
     q: um(sp.q).trim(),
   };
@@ -54,18 +54,18 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
 
   let consulta = supabase
     .from("projeto")
-    .select("id, titulo, disciplina, semestre, criado_em, turma!inner(serie, nome, ano_letivo)")
+    .select("id, titulo, disciplina, bimestre, criado_em, turma!inner(serie, nome, ano_letivo)")
     .eq("status", "publicado")
     .order("criado_em", { ascending: false });
   if (ano && ano !== "todos") consulta = consulta.eq("turma.ano_letivo", ano);
   if (f.serie) consulta = consulta.eq("turma.serie", f.serie);
   if (f.turma) consulta = consulta.eq("turma.nome", f.turma);
-  if (f.semestre) consulta = consulta.eq("semestre", f.semestre);
+  if (f.bimestre) consulta = consulta.eq("bimestre", f.bimestre);
   if (f.disciplina) consulta = consulta.eq("disciplina", f.disciplina);
   if (f.q) consulta = consulta.textSearch("busca", f.q, { type: "websearch", config: "portuguese" });
 
   const { data: projetos, error } = await consulta;
-  const filtrando = Boolean(f.serie || f.turma || f.semestre || f.disciplina || f.q || (f.ano && f.ano !== anoPadrao));
+  const filtrando = Boolean(f.serie || f.turma || f.bimestre || f.disciplina || f.q || (f.ano && f.ano !== anoPadrao));
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
@@ -91,8 +91,8 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
               opcoes={[["", "Todas"], ["1", "1º ano"], ["2", "2º ano"], ["3", "3º ano"]]} />
             <Filtro rotulo="Turma" nome="turma" valor={f.turma}
               opcoes={[["", "Todas"], ["MIL", "MIL"], ["MIN", "MIN"]]} />
-            <Filtro rotulo="Semestre" nome="semestre" valor={f.semestre}
-              opcoes={[["", "Todos"], ["1", "1º semestre"], ["2", "2º semestre"]]} />
+            <Filtro rotulo="Bimestre" nome="bimestre" valor={f.bimestre}
+              opcoes={[["", "Todos"], ["1", "1º bimestre"], ["2", "2º bimestre"], ["3", "3º bimestre"], ["4", "4º bimestre"]]} />
             {disciplinas.length > 0 && (
               <Filtro rotulo="Disciplina" nome="disciplina" valor={f.disciplina}
                 opcoes={[["", "Todas"], ...disciplinas.map((d): [string, string] => [d, d])]} />
@@ -127,7 +127,7 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
                 >
                   <Card className="h-full transition group-hover:ring-foreground/30">
                     <CardHeader>
-                      <CardDescription>{t.serie}º {t.nome} · {p.semestre}º semestre</CardDescription>
+                      <CardDescription>{t.serie}º {t.nome} · {p.bimestre}º bimestre</CardDescription>
                       <CardTitle className="text-lg"><h2>{p.titulo}</h2></CardTitle>
                     </CardHeader>
                     {p.disciplina && (

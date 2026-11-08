@@ -28,7 +28,7 @@ export default async function Projeto({
   // aluno da sala e professora também veem rascunhos.
   const { data: projeto } = await supabase
     .from("projeto")
-    .select("id, titulo, descricao, disciplina, semestre, status, turma_id, turma(serie, nome, ano_letivo)")
+    .select("id, titulo, descricao, disciplina, bimestre, status, turma_id, turma(serie, nome, ano_letivo)")
     .eq("id", id)
     .maybeSingle();
   if (!projeto) notFound();
@@ -69,7 +69,7 @@ export default async function Projeto({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <span>{t.serie}º {t.nome} · {t.ano_letivo} · {projeto.semestre}º semestre</span>
+        <span>{t.serie}º {t.nome} · {t.ano_letivo} · {projeto.bimestre}º bimestre</span>
         {projeto.disciplina && <Badge variant="secondary">{projeto.disciplina}</Badge>}
         {projeto.status !== "publicado" && <Badge variant="outline">{projeto.status}</Badge>}
       </div>

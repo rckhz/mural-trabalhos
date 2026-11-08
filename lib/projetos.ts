@@ -2,9 +2,6 @@ import type { Perfil } from "@/lib/sessao";
 
 export type StatusProjeto = "rascunho" | "publicado" | "oculto";
 
-// 1º semestre → bimestres 1 e 2; 2º semestre → bimestres 3 e 4.
-export const bimestresDo = (semestre: number) => (semestre === 1 ? [1, 2] : [3, 4]);
-
 // Mesma regra do RLS (pode_editar_projeto), usada para montar a tela.
 export function podeEditar(perfil: Perfil, projeto: { turma_id: string; status: string }) {
   if (perfil.funcao === "professora") return true;

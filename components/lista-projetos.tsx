@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Item = { id: string; titulo: string; semestre: number; status: string; disciplina: string | null };
+type Item = { id: string; titulo: string; bimestre: number; status: string; disciplina: string | null };
 
 const selo: Record<string, { texto: string; variante: "default" | "secondary" | "destructive" }> = {
   publicado: { texto: "publicado", variante: "default" },
@@ -31,7 +31,7 @@ export function ListaProjetos({ titulo, projetos }: { titulo: string; projetos: 
                   <div className="min-w-0">
                     <p className="truncate font-medium">{p.titulo}</p>
                     <p className="text-sm text-muted-foreground">
-                      {p.semestre}º semestre{p.disciplina && ` · ${p.disciplina}`}
+                      {p.bimestre}º bimestre{p.disciplina && ` · ${p.disciplina}`}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

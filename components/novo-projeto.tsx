@@ -23,7 +23,7 @@ export function NovoProjeto({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg"><h2>Novo projeto</h2></CardTitle>
-        <CardDescription>Depois de criar, você envia os documentos de cada bimestre e as fotos.</CardDescription>
+        <CardDescription>Depois de criar, você envia o documento do bimestre e as fotos.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={enviar} className="grid gap-4">
@@ -40,10 +40,9 @@ export function NovoProjeto({
             <Input id="titulo" name="titulo" required minLength={3} maxLength={120} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="semestre">Semestre</Label>
-            <select id="semestre" name="semestre" defaultValue="1" className={classeCampo}>
-              <option value="1">1º semestre (1º e 2º bimestres)</option>
-              <option value="2">2º semestre (3º e 4º bimestres)</option>
+            <Label htmlFor="bimestre">Bimestre</Label>
+            <select id="bimestre" name="bimestre" defaultValue="1" className={classeCampo}>
+              {[1, 2, 3, 4].map((b) => <option key={b} value={b}>{b}º bimestre</option>)}
             </select>
           </div>
           <div className="grid gap-1.5">

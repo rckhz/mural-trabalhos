@@ -16,8 +16,8 @@ export function Documentos({ projetoId, itens }: { projetoId: string; itens: Ite
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg"><h2>Documentos</h2></CardTitle>
-        <CardDescription>Um PDF por bimestre, de até 5 MB. Enviar de novo substitui o arquivo anterior.</CardDescription>
+        <CardTitle className="text-lg"><h2>Documento</h2></CardTitle>
+        <CardDescription>Um PDF de até 5 MB. Enviar de novo substitui o arquivo anterior.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         {itens.map((i) => <SlotDocumento key={i.bimestre} projetoId={projetoId} {...i} />)}
