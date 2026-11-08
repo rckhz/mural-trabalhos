@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogIn, Search } from "lucide-react";
+import { ChevronDown, LogIn, Menu, Search } from "lucide-react";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import { Voltar } from "@/components/voltar";
 import { Badge } from "@/components/ui/badge";
@@ -79,8 +79,15 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Mural de projetos</h1>
       <p className="mt-1 text-muted-foreground">Os mais recentes aparecem primeiro.</p>
 
-      <Card className="mt-6">
-        <CardContent>
+      {/* Filtros recolhíveis (☰). Abertos quando há filtro ativo. */}
+      <details open={filtrando} className="group mt-6 rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10">
+        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-4 py-3 font-medium outline-none select-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+          <Menu className="size-5" aria-hidden />
+          Filtros
+          {filtrando && <Badge variant="secondary">ativos</Badge>}
+          <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className="px-4 pb-4">
           <form action="/mural" role="search" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="q">Buscar</Label>
@@ -105,8 +112,8 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
               )}
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </details>
 
       {error ? (
         <p className="py-12 text-center text-muted-foreground">
