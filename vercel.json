@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/cron/manter-ativo", "schedule": "0 9 * * *" }]
+}
