@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useOptimistic, useState, useTransition } from "react";
+import { useConfirmar } from "@/components/confirmar";
 import { Switch } from "@/components/ui/switch";
 import { definirAdmin } from "./acoes";
 
@@ -16,14 +17,26 @@ export function InterruptorAdmin({
   const rotuloId = useId();
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, iniciar] = useTransition();
+  const [dialogo, confirmar] = useConfirmar();
   // Move o interruptor na hora; se o servidor recusar, volta sozinho.
   const [ligado, setLigado] = useOptimistic(admin);
 
-  const alternar = (ligar: boolean) => {
-    const pergunta = ligar
-      ? "Dar acesso de administrador? Esta conta poderá cadastrar alunos e gerenciar todo o site."
-      : "Remover o acesso de administrador? A conta volta a ser aluno da turma.";
-    if (!confirm(pergunta)) return;
+  const alternar = async (ligar: boolean) => {
+    const ok = await confirmar(
+      ligar
+        ? {
+            titulo: "Dar acesso de administrador?",
+            texto: "Esta conta poderá cadastrar alunos e gerenciar todo o site.",
+            acao: "Dar acesso",
+          }
+        : {
+            titulo: "Remover acesso de administrador?",
+            texto: "A conta volta a ser aluno da turma.",
+            acao: "Remover acesso",
+            perigoso: true,
+          },
+    );
+    if (!ok) return;
     setErro(null);
     iniciar(async () => {
       setLigado(ligar);
@@ -38,6 +51,7 @@ export function InterruptorAdmin({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {dialogo}
       <Switch
         aria-labelledby={rotuloId}
         checked={ligado}
