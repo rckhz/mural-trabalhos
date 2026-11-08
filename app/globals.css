@@ -132,6 +132,11 @@
   * {
     @apply border-border outline-ring/50;
     }
+  /* O Edge tem um "olhinho" próprio no campo de senha; o site já tem o dele. */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
   body {
     @apply bg-background text-foreground;
     }
