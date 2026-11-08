@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomInt } from "node:crypto";
 
 // Cadastro e gestão de contas de aluno. Roda só no servidor (Vercel).
@@ -8,11 +8,14 @@ import { randomInt } from "node:crypto";
 
 export const maxDuration = 60;
 
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false, autoRefreshToken: false } },
-);
+// Criado só na primeira requisição, para o build não exigir as variáveis de ambiente.
+let _admin: SupabaseClient | undefined;
+const admin = () =>
+  (_admin ??= createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  ));
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ALFABETO = "abcdefghjkmnpqrstuvwxyz23456789"; // sem 0/o, 1/l/i para não confundir
@@ -24,9 +27,9 @@ function senhaTemporaria() {
 async function ehProfessora(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer /, "");
   if (!token) return false;
-  const { data } = await admin.auth.getUser(token);
+  const { data } = await admin().auth.getUser(token);
   if (!data.user) return false;
-  const { data: perfil } = await admin
+  const { data: perfil } = await admin()
     .from("perfil")
     .select("funcao, ativo")
     .eq("id", data.user.id)
@@ -59,17 +62,17 @@ export async function POST(req: Request) {
     }
 
     const senha = senhaTemporaria();
-    const { data, error } = await admin.auth.admin.createUser({ email, password: senha, email_confirm: true });
+    const { data, error } = await admin().auth.admin.createUser({ email, password: senha, email_confirm: true });
     if (error || !data.user) {
       resultado.push({ nome, email, erro: error?.message ?? "Falha ao criar conta" });
       continue;
     }
 
-    const { error: erroPerfil } = await admin
+    const { error: erroPerfil } = await admin()
       .from("perfil")
       .insert({ id: data.user.id, nome, funcao: "aluno", turma_id });
     if (erroPerfil) {
-      await admin.auth.admin.deleteUser(data.user.id); // não deixa conta sem perfil
+      await admin().auth.admin.deleteUser(data.user.id); // não deixa conta sem perfil
       resultado.push({ nome, email, erro: erroPerfil.message });
       continue;
     }
@@ -86,26 +89,26 @@ export async function PATCH(req: Request) {
   if (!(await ehProfessora(req))) return negado();
 
   const { user_id, acao } = await req.json();
-  const { data: alvo } = await admin.from("perfil").select("funcao").eq("id", user_id).single();
+  const { data: alvo } = await admin().from("perfil").select("funcao").eq("id", user_id).single();
   if (alvo?.funcao !== "aluno") {
     return NextResponse.json({ erro: "Aluno não encontrado" }, { status: 404 });
   }
 
   if (acao === "resetar_senha") {
     const senha = senhaTemporaria();
-    const { error } = await admin.auth.admin.updateUserById(user_id, { password: senha });
+    const { error } = await admin().auth.admin.updateUserById(user_id, { password: senha });
     if (error) return NextResponse.json({ erro: error.message }, { status: 500 });
-    await admin.from("perfil").update({ deve_trocar_senha: true }).eq("id", user_id);
+    await admin().from("perfil").update({ deve_trocar_senha: true }).eq("id", user_id);
     return NextResponse.json({ senha });
   }
 
   if (acao === "desativar" || acao === "reativar") {
     const ativo = acao === "reativar";
-    const { error } = await admin.auth.admin.updateUserById(user_id, {
+    const { error } = await admin().auth.admin.updateUserById(user_id, {
       ban_duration: ativo ? "none" : "876000h",
     });
     if (error) return NextResponse.json({ erro: error.message }, { status: 500 });
-    await admin.from("perfil").update({ ativo }).eq("id", user_id);
+    await admin().from("perfil").update({ ativo }).eq("id", user_id);
     return NextResponse.json({ ok: true });
   }
 
