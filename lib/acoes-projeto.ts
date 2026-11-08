@@ -45,7 +45,8 @@ function lerDados(form: FormData) {
   return {
     titulo: String(form.get("titulo") ?? "").trim(),
     semestre: Number(form.get("semestre")),
-    disciplina: String(form.get("disciplina") ?? "").trim() || null,
+    // Sempre em maiúsculas e sem espaços sobrando: "ea", "Ea " e "EA" viram "EA".
+    disciplina: String(form.get("disciplina") ?? "").trim().replace(/\s+/g, " ").toLocaleUpperCase("pt-BR") || null,
     descricao: String(form.get("descricao") ?? "").trim() || null,
   };
 }

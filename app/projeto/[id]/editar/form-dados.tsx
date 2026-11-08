@@ -34,7 +34,7 @@ export function FormDados({ projeto }: { projeto: Dados }) {
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="disciplina">Disciplina (opcional)</Label>
-            <Input id="disciplina" name="disciplina" defaultValue={projeto.disciplina ?? ""} maxLength={60} />
+            <Input id="disciplina" name="disciplina" defaultValue={projeto.disciplina ?? ""} maxLength={60} className="uppercase" />
           </div>
           <div className="grid gap-1.5 sm:col-span-2">
             <Label htmlFor="descricao">Descrição</Label>

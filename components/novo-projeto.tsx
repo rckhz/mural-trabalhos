@@ -36,7 +36,7 @@ export function NovoProjeto({ turmas, turmaPadrao }: { turmas?: Turma[]; turmaPa
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="disciplina">Disciplina (opcional)</Label>
-            <Input id="disciplina" name="disciplina" maxLength={60} placeholder="Ex.: Biologia" />
+            <Input id="disciplina" name="disciplina" maxLength={60} placeholder="Ex.: BIOLOGIA" className="uppercase" />
           </div>
           {erro && <p role="alert" className="text-sm text-destructive">{erro}</p>}
           <Button type="submit" disabled={pendente}>
