@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomInt } from "node:crypto";
+import { chaveSecreta } from "@/lib/supabase/config";
 
 // Cadastro e gestão de contas de aluno. Roda só no servidor (Vercel).
 // SUPABASE_SERVICE_ROLE_KEY: variável de ambiente SEM o prefixo NEXT_PUBLIC_.
@@ -10,12 +11,11 @@ export const maxDuration = 60;
 
 // Criado só na primeira requisição, para o build não exigir as variáveis de ambiente.
 let _admin: SupabaseClient | undefined;
-const admin = () =>
-  (_admin ??= createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  ));
+const admin = () => {
+  if (_admin) return _admin;
+  const { url, chave } = chaveSecreta();
+  return (_admin = createClient(url, chave, { auth: { persistSession: false, autoRefreshToken: false } }));
+};
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ALFABETO = "abcdefghjkmnpqrstuvwxyz23456789"; // sem 0/o, 1/l/i para não confundir

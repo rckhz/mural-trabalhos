@@ -1,13 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { configPublica } from "@/lib/supabase/config";
 
 // Cliente para Server Components: usa a sessão do usuário (se houver) pelos cookies,
 // então o RLS decide o que cada um vê.
 export async function supabaseServidor() {
   const cookieStore = await cookies();
+  const { url, chave } = configPublica();
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    chave,
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
