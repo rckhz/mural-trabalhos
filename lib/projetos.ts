@@ -8,5 +8,14 @@ export function podeEditar(perfil: Perfil, projeto: { turma_id: string; status: 
   return perfil.turma_id === projeto.turma_id && projeto.status !== "oculto";
 }
 
+// Texto do rodapé de autoria: "Criado por Ana · editado por Bruno".
+export function textoAutoria(criadoPor: string | null, editadoPor: string | null) {
+  if (!criadoPor && !editadoPor) return null;
+  if (editadoPor && editadoPor !== criadoPor) {
+    return criadoPor ? `Criado por ${criadoPor} · editado por ${editadoPor}` : `Editado por ${editadoPor}`;
+  }
+  return `Criado por ${criadoPor}`;
+}
+
 export const classeCampo =
   "w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";

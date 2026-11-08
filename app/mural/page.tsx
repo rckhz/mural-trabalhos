@@ -4,7 +4,8 @@ import { supabaseServidor } from "@/lib/supabase/servidor";
 import { Voltar } from "@/components/voltar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { textoAutoria } from "@/lib/projetos";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -54,7 +55,7 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
 
   let consulta = supabase
     .from("projeto")
-    .select("id, titulo, disciplina, bimestre, criado_em, turma!inner(serie, nome, ano_letivo)")
+    .select("id, titulo, disciplina, bimestre, criado_em, criado_por_nome, atualizado_por_nome, turma!inner(serie, nome, ano_letivo)")
     .eq("status", "publicado")
     .order("criado_em", { ascending: false });
   if (ano && ano !== "todos") consulta = consulta.eq("turma.ano_letivo", ano);
@@ -119,6 +120,7 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projetos.map((p) => {
             const t = p.turma as unknown as { serie: number; nome: string };
+            const autoria = textoAutoria(p.criado_por_nome, p.atualizado_por_nome);
             return (
               <li key={p.id}>
                 <Link
@@ -131,9 +133,12 @@ export default async function Mural({ searchParams }: { searchParams: Params }) 
                       <CardTitle className="text-lg"><h2>{p.titulo}</h2></CardTitle>
                     </CardHeader>
                     {p.disciplina && (
-                      <CardContent className="mt-auto">
+                      <CardContent>
                         <Badge variant="secondary">{p.disciplina}</Badge>
                       </CardContent>
+                    )}
+                    {autoria && (
+                      <CardFooter className="mt-auto text-xs text-muted-foreground">{autoria}</CardFooter>
                     )}
                   </Card>
                 </Link>

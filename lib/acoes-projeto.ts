@@ -15,6 +15,12 @@ async function sessao() {
   return s;
 }
 
+// Enviar/remover PDF ou foto conta como edição do projeto: "toca" o projeto
+// para o banco gravar quem editou por último (o gatilho preenche o nome).
+async function tocar(s: Awaited<ReturnType<typeof sessao>>, projetoId: string) {
+  await s.supabase.from("projeto").update({ atualizado_em: new Date().toISOString() }).eq("id", projetoId);
+}
+
 function revalidar(id: string) {
   revalidatePath(`/projeto/${id}/editar`);
   revalidatePath(`/projeto/${id}`);
@@ -132,6 +138,7 @@ export async function salvarDocumento(projetoId: string, bimestre: number, camin
   if (antigo?.arquivo && antigo.arquivo !== caminho) {
     await s.supabase.storage.from("documentos").remove([antigo.arquivo]);
   }
+  await tocar(s, projetoId);
   revalidar(projetoId);
   return {};
 }
@@ -149,6 +156,7 @@ export async function removerDocumento(projetoId: string, bimestre: number): Pro
   const { error } = await s.supabase.from("documento").delete().eq("projeto_id", projetoId).eq("bimestre", bimestre);
   if (error) return { erro: "Não foi possível remover o documento." };
   await s.supabase.storage.from("documentos").remove([doc.arquivo]);
+  await tocar(s, projetoId);
   revalidar(projetoId);
   return {};
 }
@@ -159,6 +167,7 @@ export async function adicionarFoto(projetoId: string, caminho: string): Promise
   if (!caminho.startsWith(`${projetoId}/`)) return { erro: "Arquivo inválido." };
   const { error } = await s.supabase.from("foto").insert({ projeto_id: projetoId, arquivo: caminho });
   if (error) return { erro: "Não foi possível salvar a foto." };
+  await tocar(s, projetoId);
   revalidar(projetoId);
   return {};
 }
@@ -171,6 +180,7 @@ export async function removerFoto(fotoId: string): Promise<Resultado> {
   const { error } = await s.supabase.from("foto").delete().eq("id", fotoId);
   if (error) return { erro: "Não foi possível remover a foto." };
   await s.supabase.storage.from("fotos").remove([foto.arquivo]);
+  await tocar(s, foto.projeto_id);
   revalidar(foto.projeto_id);
   return {};
 }

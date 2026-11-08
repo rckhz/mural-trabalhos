@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UMA_HORA = 3600;
+const data = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
 export default async function Projeto({
   params,
@@ -28,7 +29,9 @@ export default async function Projeto({
   // aluno da sala e professora também veem rascunhos.
   const { data: projeto } = await supabase
     .from("projeto")
-    .select("id, titulo, descricao, disciplina, bimestre, status, turma_id, turma(serie, nome, ano_letivo)")
+    .select(
+      "id, titulo, descricao, disciplina, bimestre, status, turma_id, criado_em, atualizado_em, criado_por_nome, atualizado_por_nome, turma(serie, nome, ano_letivo)",
+    )
     .eq("id", id)
     .maybeSingle();
   if (!projeto) notFound();
@@ -154,6 +157,15 @@ export default async function Projeto({
             </ul>
           )}
         </section>
+      )}
+
+      {(projeto.criado_por_nome || projeto.atualizado_por_nome) && (
+        <footer className="mt-12 border-t pt-4 text-sm text-muted-foreground">
+          {projeto.criado_por_nome && <p>Criado por {projeto.criado_por_nome} em {data(projeto.criado_em)}</p>}
+          {projeto.atualizado_por_nome && (
+            <p>Última edição por {projeto.atualizado_por_nome} em {data(projeto.atualizado_em)}</p>
+          )}
+        </footer>
       )}
     </main>
   );
