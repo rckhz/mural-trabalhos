@@ -36,6 +36,7 @@ export default async function Projeto({
     .maybeSingle();
   if (!projeto) notFound();
 
+  const t = projeto.turma as unknown as { serie: number; nome: string; ano_letivo: number };
   const s = await sessaoAtual();
   const editavel = s ? podeEditar(s.perfil, projeto) : false;
 
@@ -58,12 +59,10 @@ export default async function Projeto({
       : Promise.resolve({ data: [] as { signedUrl: string | null }[] }),
   ]);
 
-  const t = projeto.turma as unknown as { serie: number; nome: string; ano_letivo: number };
-
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
       <div className="flex items-start justify-between gap-2">
-        <Voltar href="/mural">Voltar ao mural</Voltar>
+        <Voltar href={`/mural?ano=${t.ano_letivo}&serie=${t.serie}&turma=${t.nome}`}>Voltar ao mural</Voltar>
         {editavel && (
           <Link href={`/projeto/${id}/editar`} className={buttonVariants({ variant: "outline", size: "sm" })}>
             <Pencil />Editar
