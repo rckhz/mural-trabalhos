@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, ExternalLink, Pencil } from "lucide-react";
+import { Download, ExternalLink, Pencil, Presentation } from "lucide-react";
 import { podeEditar } from "@/lib/projetos";
 import { sessaoAtual } from "@/lib/sessao";
 import { supabaseServidor } from "@/lib/supabase/servidor";
@@ -49,16 +49,16 @@ export default async function Projeto({
     supabase.from("foto").select("id, arquivo, legenda").eq("projeto_id", id).order("atualizado_em"),
   ]);
 
-  // O PDF é mostrado na tela; o documento editável (Word) fica para baixar.
+  // O documento (PDF) é mostrado na tela; o slide (PowerPoint) fica para baixar.
   const docs = todosDocs?.filter((d) => d.formato === "pdf");
   const atual = docs?.find((d) => String(d.bimestre) === b) ?? docs?.[0];
-  const word = todosDocs?.find((d) => d.formato === "word" && d.bimestre === (atual?.bimestre ?? projeto.bimestre));
-  const [{ data: urlDoc }, { data: urlWord }, { data: urlsFotos }] = await Promise.all([
+  const slide = todosDocs?.find((d) => d.formato === "slide" && d.bimestre === (atual?.bimestre ?? projeto.bimestre));
+  const [{ data: urlDoc }, { data: urlSlide }, { data: urlsFotos }] = await Promise.all([
     atual
       ? supabase.storage.from("documentos").createSignedUrl(atual.arquivo, UMA_HORA)
       : Promise.resolve({ data: null }),
-    word
-      ? supabase.storage.from("documentos").createSignedUrl(word.arquivo, UMA_HORA, { download: true })
+    slide
+      ? supabase.storage.from("documentos").createSignedUrl(slide.arquivo, UMA_HORA, { download: true })
       : Promise.resolve({ data: null }),
     fotos?.length
       ? supabase.storage.from("fotos").createSignedUrls(fotos.map((f) => f.arquivo), UMA_HORA)
@@ -87,10 +87,10 @@ export default async function Projeto({
         <h2 id="titulo-doc" className="mb-3 text-lg font-medium">Documento</h2>
         {!atual ? (
           <>
-            <p className="text-muted-foreground">Nenhum PDF enviado ainda.</p>
-            {urlWord?.signedUrl && (
-              <a href={urlWord.signedUrl} className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-3"}>
-                <Download />Baixar documento (Word)
+            <p className="text-muted-foreground">Nenhum documento enviado ainda.</p>
+            {urlSlide?.signedUrl && (
+              <a href={urlSlide.signedUrl} className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-3"}>
+                <Presentation />Baixar slide (PowerPoint)
               </a>
             )}
           </>
@@ -130,9 +130,9 @@ export default async function Projeto({
                   >
                     Abrir documento em tela cheia <ExternalLink />
                   </a>
-                  {urlWord?.signedUrl && (
-                    <a href={urlWord.signedUrl} className={buttonVariants({ variant: "link" }) + " px-0"}>
-                      Baixar documento (Word) <Download />
+                  {urlSlide?.signedUrl && (
+                    <a href={urlSlide.signedUrl} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                      <Presentation />Baixar slide (PowerPoint) <Download />
                     </a>
                   )}
                   {atual.status !== "publicado" && <Badge variant="outline">{atual.status}</Badge>}

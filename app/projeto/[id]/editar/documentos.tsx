@@ -1,37 +1,39 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Download, ExternalLink, FileText, FileType, Trash2, Upload } from "lucide-react";
+import { Download, ExternalLink, FileText, Presentation, Trash2, Upload } from "lucide-react";
 import { useConfirmar } from "@/components/confirmar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { removerDocumento, salvarDocumento, type FormatoDocumento } from "@/lib/acoes-projeto";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
 
-const LIMITE = 5 * 1024 * 1024;
+const MB = 1024 * 1024;
 
-// Tipo de cada extensão aceita (o navegador às vezes não informa o tipo do .docx).
+// Tipo de cada extensão aceita (o navegador às vezes não informa o tipo do .pptx).
 const TIPOS: Record<string, string> = {
   pdf: "application/pdf",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  doc: "application/msword",
-  odt: "application/vnd.oasis.opendocument.text",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ppt: "application/vnd.ms-powerpoint",
+  odp: "application/vnd.oasis.opendocument.presentation",
 };
 
 const CONFIG = {
-  word: {
-    titulo: "Documento (Word)",
-    dica: "Arquivo editável: .docx, .doc ou .odt",
-    extensoes: ["docx", "doc", "odt"],
-    botao: "Enviar documento",
-    icone: FileType,
-  },
   pdf: {
-    titulo: "PDF",
-    dica: "É o que aparece no mural",
+    titulo: "Documento (PDF)",
+    dica: "Aparece na tela do mural",
     extensoes: ["pdf"],
-    botao: "Enviar PDF",
+    limiteMb: 5,
+    botao: "Enviar documento",
     icone: FileText,
+  },
+  slide: {
+    titulo: "Slide (PowerPoint)",
+    dica: "Arquivo .pptx, .ppt ou .odp, para baixar",
+    extensoes: ["pptx", "ppt", "odp"],
+    limiteMb: 10,
+    botao: "Enviar slide",
+    icone: Presentation,
   },
 } as const;
 
@@ -41,24 +43,24 @@ export function Documentos({
   projetoId,
   bimestre,
   pdf,
-  word,
+  slide,
 }: {
   projetoId: string;
   bimestre: number;
   pdf: ItemDocumento;
-  word: ItemDocumento;
+  slide: ItemDocumento;
 }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg"><h2>Arquivos do trabalho</h2></CardTitle>
         <CardDescription>
-          Até 5 MB cada. Enviar de novo substitui o arquivo anterior.
+          Os 2 são obrigatórios para publicar no mural. Enviar de novo substitui o arquivo anterior.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2">
-        <Caixa projetoId={projetoId} bimestre={bimestre} formato="word" {...word} />
         <Caixa projetoId={projetoId} bimestre={bimestre} formato="pdf" {...pdf} />
+        <Caixa projetoId={projetoId} bimestre={bimestre} formato="slide" {...slide} />
       </CardContent>
     </Card>
   );
@@ -84,8 +86,14 @@ function Caixa({
     if (!(c.extensoes as readonly string[]).includes(ext)) {
       return setMensagem({ texto: `Envie um arquivo ${c.extensoes.map((e) => "." + e).join(", ")}.`, erro: true });
     }
-    if (arquivo.size > LIMITE) {
-      return setMensagem({ texto: "O arquivo passa de 5 MB. Diminua o arquivo e tente de novo.", erro: true });
+    if (arquivo.size > c.limiteMb * MB) {
+      return setMensagem({
+        texto:
+          formato === "slide"
+            ? `O slide passa de ${c.limiteMb} MB. No PowerPoint, use Arquivo › Compactar imagens e tente de novo.`
+            : `O PDF passa de ${c.limiteMb} MB. Diminua o arquivo e tente de novo.`,
+        erro: true,
+      });
     }
     setOcupado(true);
     setMensagem({ texto: "Enviando..." });
@@ -110,7 +118,7 @@ function Caixa({
 
   const remover = async () => {
     const ok = await confirmar({
-      titulo: `Remover o ${formato === "pdf" ? "PDF" : "documento"}?`,
+      titulo: `Remover o ${formato === "pdf" ? "documento" : "slide"}?`,
       texto: "O arquivo será apagado. Você pode enviar outro depois.",
       acao: "Remover",
       perigoso: true,
@@ -142,7 +150,7 @@ function Caixa({
         <Icone className="size-8 shrink-0 text-muted-foreground" aria-hidden />
         <div className="min-w-0">
           <p className="font-medium">{c.titulo}</p>
-          <p className="text-sm text-muted-foreground">{c.dica}</p>
+          <p className="text-sm text-muted-foreground">{c.dica} · até {c.limiteMb} MB</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {enviadoEm ? `Enviado em ${enviadoEm}` : "Nenhum arquivo ainda"}
           </p>

@@ -9,6 +9,22 @@ import { sessaoAtual } from "@/lib/sessao";
 
 export type Resultado = { erro?: string; ok?: boolean };
 
+// Cada projeto tem 2 arquivos obrigatórios: o documento (PDF) e o slide (PowerPoint).
+export type FormatoDocumento = "pdf" | "slide";
+const FORMATOS: FormatoDocumento[] = ["pdf", "slide"];
+
+// Quais dos 2 arquivos ainda faltam no projeto (no bimestre dele).
+async function arquivosFaltando(s: Awaited<ReturnType<typeof sessao>>, projetoId: string) {
+  const { data: projeto } = await s.supabase.from("projeto").select("bimestre").eq("id", projetoId).maybeSingle();
+  const { data: docs } = await s.supabase
+    .from("documento")
+    .select("formato")
+    .eq("projeto_id", projetoId)
+    .eq("bimestre", projeto?.bimestre ?? 0);
+  const tem = new Set((docs ?? []).map((d) => d.formato));
+  return [!tem.has("pdf") && "o documento em PDF", !tem.has("slide") && "o slide"].filter(Boolean) as string[];
+}
+
 async function sessao() {
   const s = await sessaoAtual();
   if (!s) throw new Error("Sessão expirada. Entre de novo.");
@@ -89,6 +105,10 @@ export async function definirStatus(id: string, status: string): Promise<Resulta
   const s = await sessao();
   if (!["rascunho", "publicado", "oculto"].includes(status)) return { erro: "Situação inválida." };
   if (status === "oculto" && s.perfil.funcao !== "professora") return { erro: "Só o professor pode ocultar." };
+  if (status === "publicado") {
+    const faltam = await arquivosFaltando(s, id);
+    if (faltam.length) return { erro: `Para publicar, envie ${faltam.join(" e ")}.` };
+  }
 
   const { data, error } = await s.supabase.from("projeto").update({ status }).eq("id", id).select("id");
   if (error || !data?.length) return { erro: "Não foi possível alterar a situação." };
@@ -112,10 +132,7 @@ export async function excluirProjeto(id: string): Promise<Resultado> {
   redirect(projeto ? `/painel/projetos?turma=${projeto.turma_id}` : "/painel/projetos");
 }
 
-export type FormatoDocumento = "pdf" | "word";
-const FORMATOS: FormatoDocumento[] = ["pdf", "word"];
-
-// Chamado depois que o navegador enviou o arquivo (PDF ou Word) ao Storage.
+// Chamado depois que o navegador enviou o arquivo (PDF ou slide) ao Storage.
 export async function salvarDocumento(
   projetoId: string,
   bimestre: number,
@@ -161,6 +178,11 @@ export async function removerDocumento(
   formato: FormatoDocumento,
 ): Promise<Resultado> {
   const s = await sessao();
+  // Projeto publicado precisa dos 2 arquivos: dá para substituir, mas não remover.
+  const { data: projeto } = await s.supabase.from("projeto").select("status").eq("id", projetoId).maybeSingle();
+  if (projeto?.status === "publicado") {
+    return { erro: "Projeto publicado precisa dos 2 arquivos. Use Substituir, ou volte para rascunho antes de remover." };
+  }
   const { data: doc } = await s.supabase
     .from("documento")
     .select("id, arquivo")

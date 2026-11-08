@@ -39,7 +39,7 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
   const turma = projeto.turma as unknown as Turma;
   const voltar = professora ? `/painel/projetos?turma=${projeto.turma_id}` : "/sala";
 
-  // Um projeto = um bimestre = um PDF + um documento editável (Word).
+  // Um projeto = um bimestre = um documento (PDF) + um slide (PowerPoint).
   const [{ data: docs }, { data: fotos }] = await Promise.all([
     supabase
       .from("documento")
@@ -49,13 +49,13 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
     supabase.from("foto").select("id, arquivo").eq("projeto_id", id).order("atualizado_em"),
   ]);
   const docPdf = docs?.find((d) => d.formato === "pdf");
-  const docWord = docs?.find((d) => d.formato === "word");
-  const [{ data: urlPdf }, { data: urlWord }, { data: urlsFotos }] = await Promise.all([
+  const docSlide = docs?.find((d) => d.formato === "slide");
+  const [{ data: urlPdf }, { data: urlSlide }, { data: urlsFotos }] = await Promise.all([
     docPdf
       ? supabase.storage.from("documentos").createSignedUrl(docPdf.arquivo, UMA_HORA)
       : Promise.resolve({ data: null }),
-    docWord
-      ? supabase.storage.from("documentos").createSignedUrl(docWord.arquivo, UMA_HORA, { download: true })
+    docSlide
+      ? supabase.storage.from("documentos").createSignedUrl(docSlide.arquivo, UMA_HORA, { download: true })
       : Promise.resolve({ data: null }),
     fotos?.length
       ? supabase.storage.from("fotos").createSignedUrls(fotos.map((f) => f.arquivo), UMA_HORA)
@@ -94,7 +94,7 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
               projetoId={id}
               bimestre={projeto.bimestre}
               pdf={item(docPdf, urlPdf)}
-              word={item(docWord, urlWord)}
+              slide={item(docSlide, urlSlide)}
             />
             <Fotos
               projetoId={id}
