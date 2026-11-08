@@ -8,33 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { criarProjeto } from "@/lib/acoes-projeto";
 import { classeCampo } from "@/lib/projetos";
+import type { Turma } from "@/lib/turmas";
+import { CamposTurma } from "@/components/campos-turma";
 
 // turmas: só para o professor (o aluno sempre cria na própria sala).
-export function NovoProjeto({
-  turmas,
-  turmaPadrao,
-}: {
-  turmas?: { id: string; rotulo: string }[];
-  turmaPadrao?: string;
-}) {
+export function NovoProjeto({ turmas, turmaPadrao }: { turmas?: Turma[]; turmaPadrao?: string }) {
   const [erro, enviar, pendente] = useActionState(criarProjeto, null);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg"><h2>Novo projeto</h2></CardTitle>
-        <CardDescription>Depois de criar, você envia o documento do bimestre e as fotos.</CardDescription>
+        <CardDescription>Depois de criar, você envia o documento, o slide e as fotos.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={enviar} className="grid gap-4">
-          {turmas && (
-            <div className="grid gap-1.5">
-              <Label htmlFor="turma_id">Turma</Label>
-              <select id="turma_id" name="turma_id" defaultValue={turmaPadrao} className={classeCampo} required>
-                {turmas.map((t) => <option key={t.id} value={t.id}>{t.rotulo}</option>)}
-              </select>
-            </div>
-          )}
+          {turmas && <CamposTurma turmas={turmas} padrao={turmaPadrao} />}
           <div className="grid gap-1.5">
             <Label htmlFor="titulo">Título</Label>
             <Input id="titulo" name="titulo" required minLength={3} maxLength={120} />

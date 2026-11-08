@@ -5,18 +5,14 @@ import { Copy, Printer, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { CamposTurma } from "@/components/campos-turma";
+import type { Turma } from "@/lib/turmas";
 import { cadastrarAlunos } from "./acoes";
 
 const classeCampo =
   "w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
 
-export function CadastroAlunos({
-  turmas,
-  turmaPadrao,
-}: {
-  turmas: { id: string; rotulo: string }[];
-  turmaPadrao?: string;
-}) {
+export function CadastroAlunos({ turmas, turmaPadrao }: { turmas: Turma[]; turmaPadrao?: string }) {
   const [estado, enviar, pendente] = useActionState(cadastrarAlunos, null);
   const [tipo, setTipo] = useState<"aluno" | "professor">("aluno");
   const criados = estado?.resultado.filter((r) => r.senha) ?? [];
@@ -62,14 +58,7 @@ export function CadastroAlunos({
               </p>
             )}
           </fieldset>
-          {tipo === "aluno" && (
-            <div className="grid gap-1.5">
-              <Label htmlFor="turma_id">Turma</Label>
-              <select id="turma_id" name="turma_id" defaultValue={turmaPadrao} className={classeCampo} required>
-                {turmas.map((t) => <option key={t.id} value={t.id}>{t.rotulo}</option>)}
-              </select>
-            </div>
-          )}
+          {tipo === "aluno" && <CamposTurma turmas={turmas} padrao={turmaPadrao} />}
           <div className="grid gap-1.5">
             <Label htmlFor="lista">{tipo === "aluno" ? "Alunos" : "Professores"}</Label>
             <textarea

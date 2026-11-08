@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FolderKanban, Users } from "lucide-react";
+import { CalendarDays, FolderKanban, Users } from "lucide-react";
 import { CabecalhoArea } from "@/components/cabecalho-area";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { exigir } from "@/lib/sessao";
@@ -7,6 +7,7 @@ import { exigir } from "@/lib/sessao";
 const secoes = [
   { href: "/painel/alunos", Icone: Users, titulo: "Alunos", texto: "Cadastrar, gerar nova senha e desativar contas" },
   { href: "/painel/projetos", Icone: FolderKanban, titulo: "Projetos", texto: "Criar, publicar e ocultar projetos das turmas" },
+  { href: "/painel/anos", Icone: CalendarDays, titulo: "Anos letivos", texto: "Criar o ano novo, já com as 6 turmas" },
 ];
 
 export default async function Painel() {
@@ -16,7 +17,7 @@ export default async function Painel() {
       <CabecalhoArea titulo="Painel do professor" nome={perfil.nome} />
       <main className="mx-auto max-w-5xl px-4 py-6">
         <h1 className="text-2xl font-semibold tracking-tight">Gestão</h1>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {secoes.map(({ href, Icone, titulo, texto }) => {
             const card = (
               <Card className={href ? "h-full transition group-hover:ring-foreground/30" : "h-full opacity-60"}>
