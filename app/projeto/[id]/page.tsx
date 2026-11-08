@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, Pencil } from "lucide-react";
+import { Download, ExternalLink, Pencil } from "lucide-react";
 import { podeEditar } from "@/lib/projetos";
 import { sessaoAtual } from "@/lib/sessao";
 import { supabaseServidor } from "@/lib/supabase/servidor";
@@ -40,19 +40,25 @@ export default async function Projeto({
   const s = await sessaoAtual();
   const editavel = s ? podeEditar(s.perfil, projeto) : false;
 
-  const [{ data: docs }, { data: fotos }] = await Promise.all([
+  const [{ data: todosDocs }, { data: fotos }] = await Promise.all([
     supabase
       .from("documento")
-      .select("bimestre, arquivo, status")
+      .select("bimestre, arquivo, status, formato")
       .eq("projeto_id", id)
       .order("bimestre", { ascending: false }),
     supabase.from("foto").select("id, arquivo, legenda").eq("projeto_id", id).order("atualizado_em"),
   ]);
 
+  // O PDF é mostrado na tela; o documento editável (Word) fica para baixar.
+  const docs = todosDocs?.filter((d) => d.formato === "pdf");
   const atual = docs?.find((d) => String(d.bimestre) === b) ?? docs?.[0];
-  const [{ data: urlDoc }, { data: urlsFotos }] = await Promise.all([
+  const word = todosDocs?.find((d) => d.formato === "word" && d.bimestre === (atual?.bimestre ?? projeto.bimestre));
+  const [{ data: urlDoc }, { data: urlWord }, { data: urlsFotos }] = await Promise.all([
     atual
       ? supabase.storage.from("documentos").createSignedUrl(atual.arquivo, UMA_HORA)
+      : Promise.resolve({ data: null }),
+    word
+      ? supabase.storage.from("documentos").createSignedUrl(word.arquivo, UMA_HORA, { download: true })
       : Promise.resolve({ data: null }),
     fotos?.length
       ? supabase.storage.from("fotos").createSignedUrls(fotos.map((f) => f.arquivo), UMA_HORA)
@@ -80,7 +86,14 @@ export default async function Projeto({
       <section className="mt-8" aria-labelledby="titulo-doc">
         <h2 id="titulo-doc" className="mb-3 text-lg font-medium">Documento</h2>
         {!atual ? (
-          <p className="text-muted-foreground">Nenhum documento enviado ainda.</p>
+          <>
+            <p className="text-muted-foreground">Nenhum PDF enviado ainda.</p>
+            {urlWord?.signedUrl && (
+              <a href={urlWord.signedUrl} className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-3"}>
+                <Download />Baixar documento (Word)
+              </a>
+            )}
+          </>
         ) : (
           <>
             {docs!.length > 1 && (
@@ -108,7 +121,7 @@ export default async function Projeto({
                   src={urlDoc.signedUrl}
                   title={`Documento do ${atual.bimestre}º bimestre`}
                 />
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                   <a
                     href={urlDoc.signedUrl}
                     target="_blank"
@@ -117,6 +130,11 @@ export default async function Projeto({
                   >
                     Abrir documento em tela cheia <ExternalLink />
                   </a>
+                  {urlWord?.signedUrl && (
+                    <a href={urlWord.signedUrl} className={buttonVariants({ variant: "link" }) + " px-0"}>
+                      Baixar documento (Word) <Download />
+                    </a>
+                  )}
                   {atual.status !== "publicado" && <Badge variant="outline">{atual.status}</Badge>}
                 </div>
               </>

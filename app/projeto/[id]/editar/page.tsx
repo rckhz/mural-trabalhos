@@ -39,30 +39,33 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
   const turma = projeto.turma as unknown as Turma;
   const voltar = professora ? `/painel/projetos?turma=${projeto.turma_id}` : "/sala";
 
-  // Um projeto = um bimestre = um documento.
-  const [{ data: doc }, { data: fotos }] = await Promise.all([
+  // Um projeto = um bimestre = um PDF + um documento editável (Word).
+  const [{ data: docs }, { data: fotos }] = await Promise.all([
     supabase
       .from("documento")
-      .select("arquivo, atualizado_em")
+      .select("arquivo, formato, atualizado_em")
       .eq("projeto_id", id)
-      .eq("bimestre", projeto.bimestre)
-      .maybeSingle(),
+      .eq("bimestre", projeto.bimestre),
     supabase.from("foto").select("id, arquivo").eq("projeto_id", id).order("atualizado_em"),
   ]);
-  const [{ data: urlDoc }, { data: urlsFotos }] = await Promise.all([
-    doc
-      ? supabase.storage.from("documentos").createSignedUrl(doc.arquivo, UMA_HORA)
+  const docPdf = docs?.find((d) => d.formato === "pdf");
+  const docWord = docs?.find((d) => d.formato === "word");
+  const [{ data: urlPdf }, { data: urlWord }, { data: urlsFotos }] = await Promise.all([
+    docPdf
+      ? supabase.storage.from("documentos").createSignedUrl(docPdf.arquivo, UMA_HORA)
+      : Promise.resolve({ data: null }),
+    docWord
+      ? supabase.storage.from("documentos").createSignedUrl(docWord.arquivo, UMA_HORA, { download: true })
       : Promise.resolve({ data: null }),
     fotos?.length
       ? supabase.storage.from("fotos").createSignedUrls(fotos.map((f) => f.arquivo), UMA_HORA)
       : Promise.resolve({ data: [] as { signedUrl: string | null }[] }),
   ]);
 
-  const documento = {
-    bimestre: projeto.bimestre,
-    url: urlDoc?.signedUrl ?? null,
+  const item = (doc: typeof docPdf, url: { signedUrl: string } | null) => ({
+    url: url?.signedUrl ?? null,
     enviadoEm: doc ? formatarData(doc.atualizado_em) : null,
-  };
+  });
 
   return (
     <>
@@ -87,7 +90,12 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
           <div className="mt-6 grid gap-6">
             <StatusProjeto id={id} status={projeto.status} professora={professora} />
             <FormDados projeto={projeto} />
-            <Documentos projetoId={id} itens={[documento]} />
+            <Documentos
+              projetoId={id}
+              bimestre={projeto.bimestre}
+              pdf={item(docPdf, urlPdf)}
+              word={item(docWord, urlWord)}
+            />
             <Fotos
               projetoId={id}
               fotos={(fotos ?? []).map((f, i) => ({ id: f.id, url: urlsFotos?.[i]?.signedUrl ?? null }))}

@@ -111,9 +111,10 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-lg"><h2>Administradores</h2></CardTitle>
+            <CardTitle className="text-lg"><h2>Professores e administradores</h2></CardTitle>
             <CardDescription>
-              Contas com acesso total ao painel. Para dar acesso a alguém, ligue o interruptor na lista da turma.
+              Contas com acesso total ao painel. Para criar uma, escolha &quot;Professor&quot; em Cadastrar contas.
+              Também dá para dar acesso a um aluno ligando o interruptor na lista da turma.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -1,94 +1,158 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ExternalLink, Trash2, Upload } from "lucide-react";
+import { Download, ExternalLink, FileText, FileType, Trash2, Upload } from "lucide-react";
 import { useConfirmar } from "@/components/confirmar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { removerDocumento, salvarDocumento } from "@/lib/acoes-projeto";
+import { removerDocumento, salvarDocumento, type FormatoDocumento } from "@/lib/acoes-projeto";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
 
-const LIMITE_PDF = 5 * 1024 * 1024;
+const LIMITE = 5 * 1024 * 1024;
 
-type Item = { bimestre: number; url: string | null; enviadoEm: string | null };
+// Tipo de cada extensão aceita (o navegador às vezes não informa o tipo do .docx).
+const TIPOS: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  doc: "application/msword",
+  odt: "application/vnd.oasis.opendocument.text",
+};
 
-export function Documentos({ projetoId, itens }: { projetoId: string; itens: Item[] }) {
+const CONFIG = {
+  word: {
+    titulo: "Documento (Word)",
+    dica: "Arquivo editável: .docx, .doc ou .odt",
+    extensoes: ["docx", "doc", "odt"],
+    botao: "Enviar documento",
+    icone: FileType,
+  },
+  pdf: {
+    titulo: "PDF",
+    dica: "É o que aparece no mural",
+    extensoes: ["pdf"],
+    botao: "Enviar PDF",
+    icone: FileText,
+  },
+} as const;
+
+export type ItemDocumento = { url: string | null; enviadoEm: string | null };
+
+export function Documentos({
+  projetoId,
+  bimestre,
+  pdf,
+  word,
+}: {
+  projetoId: string;
+  bimestre: number;
+  pdf: ItemDocumento;
+  word: ItemDocumento;
+}) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg"><h2>Documento</h2></CardTitle>
-        <CardDescription>Um PDF de até 5 MB. Enviar de novo substitui o arquivo anterior.</CardDescription>
+        <CardTitle className="text-lg"><h2>Arquivos do trabalho</h2></CardTitle>
+        <CardDescription>
+          Até 5 MB cada. Enviar de novo substitui o arquivo anterior.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3">
-        {itens.map((i) => <SlotDocumento key={i.bimestre} projetoId={projetoId} {...i} />)}
+      <CardContent className="grid gap-3 sm:grid-cols-2">
+        <Caixa projetoId={projetoId} bimestre={bimestre} formato="word" {...word} />
+        <Caixa projetoId={projetoId} bimestre={bimestre} formato="pdf" {...pdf} />
       </CardContent>
     </Card>
   );
 }
 
-function SlotDocumento({ projetoId, bimestre, url, enviadoEm }: Item & { projetoId: string }) {
+function Caixa({
+  projetoId,
+  bimestre,
+  formato,
+  url,
+  enviadoEm,
+}: ItemDocumento & { projetoId: string; bimestre: number; formato: FormatoDocumento }) {
+  const c = CONFIG[formato];
+  const Icone = c.icone;
   const entrada = useRef<HTMLInputElement>(null);
   const [mensagem, setMensagem] = useState<{ texto: string; erro?: boolean } | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
   const [dialogo, confirmar] = useConfirmar();
 
   const enviar = async (arquivo: File) => {
-    if (arquivo.type !== "application/pdf") return setMensagem({ texto: "Envie um arquivo PDF.", erro: true });
-    if (arquivo.size > LIMITE_PDF) {
-      return setMensagem({ texto: "O PDF passa de 5 MB. Diminua o arquivo e tente de novo.", erro: true });
+    const ext = arquivo.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!(c.extensoes as readonly string[]).includes(ext)) {
+      return setMensagem({ texto: `Envie um arquivo ${c.extensoes.map((e) => "." + e).join(", ")}.`, erro: true });
+    }
+    if (arquivo.size > LIMITE) {
+      return setMensagem({ texto: "O arquivo passa de 5 MB. Diminua o arquivo e tente de novo.", erro: true });
     }
     setOcupado(true);
     setMensagem({ texto: "Enviando..." });
     const supabase = supabaseNavegador();
-    const caminho = `${projetoId}/b${bimestre}-${Date.now()}.pdf`;
+    const caminho = `${projetoId}/b${bimestre}-${formato}-${Date.now()}.${ext}`;
     const { error } = await supabase.storage
       .from("documentos")
-      .upload(caminho, arquivo, { contentType: "application/pdf" });
+      .upload(caminho, arquivo, { contentType: TIPOS[ext] });
     if (error) {
       setOcupado(false);
       return setMensagem({ texto: "Falha no envio. Verifique a internet e tente de novo.", erro: true });
     }
-    const r = await salvarDocumento(projetoId, bimestre, caminho);
+    const r = await salvarDocumento(projetoId, bimestre, caminho, formato);
     if (r.erro) {
       await supabase.storage.from("documentos").remove([caminho]); // não deixa arquivo solto
       setMensagem({ texto: r.erro, erro: true });
     } else {
-      setMensagem({ texto: "Documento enviado!" });
+      setMensagem({ texto: "Arquivo enviado!" });
     }
     setOcupado(false);
   };
 
   const remover = async () => {
     const ok = await confirmar({
-      titulo: `Remover o documento do ${bimestre}º bimestre?`,
+      titulo: `Remover o ${formato === "pdf" ? "PDF" : "documento"}?`,
       texto: "O arquivo será apagado. Você pode enviar outro depois.",
       acao: "Remover",
       perigoso: true,
     });
     if (!ok) return;
     setOcupado(true);
-    const r = await removerDocumento(projetoId, bimestre);
+    const r = await removerDocumento(projetoId, bimestre, formato);
     setMensagem(r.erro ? { texto: r.erro, erro: true } : null);
     setOcupado(false);
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3">
+    <div
+      className={`flex flex-col gap-3 rounded-lg border-2 border-dashed p-4 transition ${arrastando ? "border-primary bg-muted/50" : ""}`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setArrastando(true);
+      }}
+      onDragLeave={() => setArrastando(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setArrastando(false);
+        const arquivo = e.dataTransfer.files?.[0];
+        if (arquivo && !ocupado) enviar(arquivo);
+      }}
+    >
       {dialogo}
-      <div>
-        <p className="font-medium">{bimestre}º bimestre</p>
-        <p className="text-sm text-muted-foreground">{enviadoEm ? `Enviado em ${enviadoEm}` : "Nenhum documento ainda"}</p>
+      <div className="flex items-start gap-3">
+        <Icone className="size-8 shrink-0 text-muted-foreground" aria-hidden />
+        <div className="min-w-0">
+          <p className="font-medium">{c.titulo}</p>
+          <p className="text-sm text-muted-foreground">{c.dica}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {enviadoEm ? `Enviado em ${enviadoEm}` : "Nenhum arquivo ainda"}
+          </p>
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {url && (
-          <a href={url} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-            <ExternalLink />Abrir
-          </a>
-        )}
+      <div className="mt-auto flex flex-wrap items-center gap-2">
         <input
           ref={entrada}
           type="file"
-          accept="application/pdf"
+          accept={c.extensoes.map((e) => "." + e).join(",")}
           className="hidden"
           onChange={(e) => {
             const arquivo = e.target.files?.[0];
@@ -98,16 +162,26 @@ function SlotDocumento({ projetoId, bimestre, url, enviadoEm }: Item & { projeto
         />
         <Button size="sm" variant={url ? "outline" : "default"} disabled={ocupado} onClick={() => entrada.current?.click()}>
           <Upload />
-          {url ? "Substituir" : "Enviar PDF"}
+          {url ? "Substituir" : c.botao}
         </Button>
         {url && (
-          <Button size="icon-sm" variant="ghost" disabled={ocupado} onClick={remover} aria-label={`Remover documento do ${bimestre}º bimestre`}>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            {formato === "pdf" ? <><ExternalLink />Abrir</> : <><Download />Baixar</>}
+          </a>
+        )}
+        {url && (
+          <Button size="icon-sm" variant="ghost" disabled={ocupado} onClick={remover} aria-label={`Remover ${c.titulo}`}>
             <Trash2 />
           </Button>
         )}
       </div>
       {mensagem && (
-        <p role={mensagem.erro ? "alert" : "status"} className={`w-full text-sm ${mensagem.erro ? "text-destructive" : "text-muted-foreground"}`}>
+        <p role={mensagem.erro ? "alert" : "status"} className={`text-sm ${mensagem.erro ? "text-destructive" : "text-muted-foreground"}`}>
           {mensagem.texto}
         </p>
       )}

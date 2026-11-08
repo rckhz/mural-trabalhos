@@ -112,21 +112,33 @@ export async function excluirProjeto(id: string): Promise<Resultado> {
   redirect(projeto ? `/painel/projetos?turma=${projeto.turma_id}` : "/painel/projetos");
 }
 
-// Chamado depois que o navegador enviou o PDF ao Storage.
-export async function salvarDocumento(projetoId: string, bimestre: number, caminho: string): Promise<Resultado> {
+export type FormatoDocumento = "pdf" | "word";
+const FORMATOS: FormatoDocumento[] = ["pdf", "word"];
+
+// Chamado depois que o navegador enviou o arquivo (PDF ou Word) ao Storage.
+export async function salvarDocumento(
+  projetoId: string,
+  bimestre: number,
+  caminho: string,
+  formato: FormatoDocumento,
+): Promise<Resultado> {
   const s = await sessao();
-  if (!caminho.startsWith(`${projetoId}/`)) return { erro: "Arquivo inválido." };
+  if (!caminho.startsWith(`${projetoId}/`) || !FORMATOS.includes(formato)) return { erro: "Arquivo inválido." };
 
   const { data: antigo } = await s.supabase
     .from("documento")
     .select("arquivo")
     .eq("projeto_id", projetoId)
     .eq("bimestre", bimestre)
+    .eq("formato", formato)
     .maybeSingle();
 
   const { error } = await s.supabase
     .from("documento")
-    .upsert({ projeto_id: projetoId, bimestre, arquivo: caminho, status: "publicado" }, { onConflict: "projeto_id,bimestre" });
+    .upsert(
+      { projeto_id: projetoId, bimestre, formato, arquivo: caminho, status: "publicado" },
+      { onConflict: "projeto_id,bimestre,formato" },
+    );
   if (error) {
     return {
       erro: error.message.includes("bimestre")
@@ -134,7 +146,7 @@ export async function salvarDocumento(projetoId: string, bimestre: number, camin
         : "Não foi possível salvar o documento.",
     };
   }
-  // Substituição: apaga o PDF anterior para economizar espaço.
+  // Substituição: apaga o arquivo anterior para economizar espaço.
   if (antigo?.arquivo && antigo.arquivo !== caminho) {
     await s.supabase.storage.from("documentos").remove([antigo.arquivo]);
   }
@@ -143,17 +155,22 @@ export async function salvarDocumento(projetoId: string, bimestre: number, camin
   return {};
 }
 
-export async function removerDocumento(projetoId: string, bimestre: number): Promise<Resultado> {
+export async function removerDocumento(
+  projetoId: string,
+  bimestre: number,
+  formato: FormatoDocumento,
+): Promise<Resultado> {
   const s = await sessao();
   const { data: doc } = await s.supabase
     .from("documento")
-    .select("arquivo")
+    .select("id, arquivo")
     .eq("projeto_id", projetoId)
     .eq("bimestre", bimestre)
+    .eq("formato", formato)
     .maybeSingle();
   if (!doc) return { erro: "Documento não encontrado." };
 
-  const { error } = await s.supabase.from("documento").delete().eq("projeto_id", projetoId).eq("bimestre", bimestre);
+  const { error } = await s.supabase.from("documento").delete().eq("id", doc.id);
   if (error) return { erro: "Não foi possível remover o documento." };
   await s.supabase.storage.from("documentos").remove([doc.arquivo]);
   await tocar(s, projetoId);

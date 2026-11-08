@@ -73,11 +73,13 @@ function lerLista(texto: string) {
 
 export async function cadastrarAlunos(_: EstadoCadastro, form: FormData): Promise<EstadoCadastro> {
   await garantirProfessora();
-  const turmaId = String(form.get("turma_id") ?? "");
+  // Professor: conta sem turma, com acesso total ao painel.
+  const professor = form.get("tipo") === "professor";
+  const turmaId = professor ? null : String(form.get("turma_id") ?? "");
   const lista = lerLista(String(form.get("lista") ?? ""));
-  if (!turmaId) return { resultado: [], erro: "Escolha a turma." };
-  if (!lista.length) return { resultado: [], erro: "Cole pelo menos um aluno." };
-  if (lista.length > 60) return { resultado: [], erro: "Envie no máximo 60 alunos por vez." };
+  if (!professor && !turmaId) return { resultado: [], erro: "Escolha a turma." };
+  if (!lista.length) return { resultado: [], erro: "Cole pelo menos uma pessoa." };
+  if (lista.length > 60) return { resultado: [], erro: "Envie no máximo 60 contas por vez." };
 
   const admin = supabaseAdmin();
   const resultado: LinhaCadastro[] = [];
@@ -100,7 +102,7 @@ export async function cadastrarAlunos(_: EstadoCadastro, form: FormData): Promis
     }
     const { error: erroPerfil } = await admin
       .from("perfil")
-      .insert({ id: data.user.id, nome, funcao: "aluno", turma_id: turmaId });
+      .insert({ id: data.user.id, nome, funcao: professor ? "professora" : "aluno", turma_id: turmaId });
     if (erroPerfil) {
       await admin.auth.admin.deleteUser(data.user.id); // não deixa conta sem perfil
       resultado.push({ nome, email, erro: "Não foi possível salvar o perfil" });
