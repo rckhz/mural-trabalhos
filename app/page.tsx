@@ -9,7 +9,7 @@ const opcoes = [
 
 export default function Inicio() {
   return (
-    <main className="grid min-h-dvh place-content-center gap-8 px-4 py-12 text-center">
+    <main className="grid min-h-dvh content-center gap-8 px-4 py-12 text-center">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Mural de Trabalhos</h1>
         <p className="text-muted-foreground">Projetos das turmas do Ensino Médio</p>
