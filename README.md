@@ -137,6 +137,7 @@ Os arquivos em [supabase/migrations/](supabase/migrations/) devem ser rodados **
 | `20261108020000_ano_2025.sql` | Cria o ano de 2025 com as 6 turmas |
 | `20261108030000_documento_e_slide.sql` | Documento + slide por projeto (substituída pela próxima) |
 | `20261108040000_semestre_link_medidor.sql` | Projeto por semestre, slide como link, 1 PDF por projeto e o medidor de armazenamento |
+| `20261108050000_bucket_fotos.sql` | Garante que o bucket de fotos aceite WebP, o formato que o site usa |
 
 **Primeiro professor** (só numa instalação nova):
 
