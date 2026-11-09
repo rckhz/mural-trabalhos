@@ -1,0 +1,38 @@
+# Despertador do Supabase: faz uma consulta simples no banco todo dia, para o
+# plano gratuito não pausar o projeto por inatividade (férias, feriados).
+# Funciona junto com o Vercel Cron (vercel.json): se um falhar, o outro segura.
+#
+# Precisa de 2 "secrets" em GitHub › Settings › Secrets and variables › Actions:
+#   SUPABASE_URL       → Project URL (https://xxxx.supabase.co)
+#   SUPABASE_ANON_KEY  → chave anon / publishable (a mesma pública do site)
+name: Despertador do Supabase
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # todo dia às 12:00 UTC (09:00 em Brasília)
+  workflow_dispatch: # permite rodar na mão: aba Actions › Run workflow
+
+jobs:
+  acordar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Consultar o banco
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Faltam os secrets SUPABASE_URL e/ou SUPABASE_ANON_KEY."
+            exit 1
+          fi
+          status=$(curl -sS -o resposta.json -w "%{http_code}" \
+            --max-time 30 --retry 3 --retry-delay 10 \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/turma?select=id&limit=1")
+          echo "Resposta do Supabase: HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::O Supabase não respondeu 200 (veio $status). Projeto pausado ou chave errada?"
+            exit 1
+          fi
