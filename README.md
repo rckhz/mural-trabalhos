@@ -43,7 +43,7 @@ Este documento tem duas partes:
 | **Turmas** | 1º, 2º e 3º ano, cada um com duas turmas: **MIL** e **MIN** (6 turmas por ano letivo) |
 | **Quem vê** | Qualquer pessoa, sem login, vê os projetos publicados |
 | **Quem envia** | Alunos (só da própria sala) e professores (de qualquer sala) |
-| **O que cada projeto tem** | Título, semestre, disciplina, descrição, **documento em PDF**, **link do slide** e **fotos** |
+| **O que cada projeto tem** | Título, semestre, disciplina, **cor e capa** (cabeçalho), descrição, **documento em PDF**, **link do slide** e **fotos** |
 | **Ao longo do ano** | Os projetos podem ser atualizados e os arquivos substituídos |
 
 ## 2. Mural público
@@ -71,11 +71,11 @@ Mural
 
 Ao clicar num card, a pessoa vê:
 
-1. **Cabeçalho:** turma, ano letivo, semestre e disciplina.
+1. **Cabeçalho:** faixa com a cor do projeto (ou a capa, se houver), com turma, semestre, disciplina e título.
 2. **Abrir slide:** botão que abre o link da apresentação (Google Apresentações, Canva etc.) em outra aba.
 3. **Documento:** o PDF aparece dentro da própria página, com um link para abrir em tela cheia.
 4. **Sobre o trabalho:** descrição e galeria de fotos (clicar na foto abre em tamanho maior).
-5. **Rodapé de autoria:** *"Criado por X em dd/mm/aaaa"* e *"Última edição por Y em dd/mm/aaaa"*. Esses nomes são gravados pelo próprio banco de dados e **ninguém consegue editá-los**.
+5. **Painel "Sobre este trabalho":** turma, semestre, disciplina e autoria: *"Criado por X em dd/mm/aaaa"* e *"Última edição por Y em dd/mm/aaaa"*. Esses nomes são gravados pelo próprio banco de dados e **ninguém consegue editá-los**. No celular, o painel fica embaixo do conteúdo.
 
 ## 3. Tipos de conta e permissões
 
@@ -84,7 +84,7 @@ Ao clicar num card, a pessoa vê:
 | Ver mural e projetos **publicados** | ✅ | ✅ | ✅ |
 | Ver **rascunhos** | ❌ | só da própria sala | ✅ todos |
 | Criar projeto | ❌ | só na própria sala | ✅ em qualquer turma |
-| Editar projeto, enviar PDF, link e fotos | ❌ | só da própria sala | ✅ qualquer |
+| Editar projeto (cabeçalho, PDF, link e fotos) | ❌ | só da própria sala | ✅ qualquer |
 | Publicar / voltar para rascunho | ❌ | ✅ (própria sala) | ✅ |
 | **Ocultar** projeto | ❌ | ❌ | ✅ |
 | **Excluir** projeto | ❌ | ❌ | ✅ |
@@ -109,7 +109,8 @@ Ao clicar num card, a pessoa vê:
 | **Título** | Obrigatório, de 3 a 120 caracteres |
 | **Semestre** | 1º ou 2º semestre |
 | **Disciplina** | Opcional. É gravada sempre em **MAIÚSCULAS** e sem espaços repetidos (`ea`, `Ea ` e `EA` viram `EA`) |
-| **Descrição** | Opcional, até 3000 caracteres |
+| **Cabeçalho** | Cor escolhida entre cores prontas ou numa barra de matiz (padrão verde). **Capa** opcional: imagem de até 1 MB, que cobre a cor. |
+| **Descrição** | Opcional, até 3000 caracteres. Pode ser montada com as perguntas *proposta*, *justificativa* e *equipe*. O botão **Verificar ortografia** corrige só palavras escritas errado, não gramática. |
 | **Documento (PDF)** | Até **5 MB**, só PDF. Aparece na página. |
 | **Slide (link)** | Endereço do Google Apresentações, Canva, OneDrive etc. **Não ocupa espaço no site.** |
 | **Fotos** | Quantas quiser. Cada uma é reduzida no navegador antes de enviar (veja a [seção 11](#11-armazenamento-de-arquivos)). |
@@ -125,12 +126,13 @@ Ao clicar num card, a pessoa vê:
 1. Na página inicial, clique em **"Sou aluno"** e depois em **"Entrar para enviar trabalho"**.
 2. **Primeiro acesso:** entre com o e-mail e a **senha inicial**, que é o que vem antes do `@` do e-mail (ex.: `ana.souza@email.com` → senha `ana.souza`). O site pede para você criar uma senha nova, com **no mínimo 8 caracteres**.
 3. Você cai em **Minha sala**, onde aparecem os projetos da sua turma e o formulário **Novo projeto**.
-4. **Criar projeto:** informe título, semestre e (se quiser) disciplina, e clique em **Criar projeto**. A tela de edição abre sozinha.
-5. Na tela de edição:
-   - **Sobre o projeto:** ajuste título, semestre, disciplina e escreva a descrição. Clique em **Salvar**.
-   - **Documento e slide:** envie o **PDF** (clicando no botão ou arrastando o arquivo) e cole o **link do slide**, clicando em **Salvar link**.
+4. **Criar projeto:** informe título, semestre e (se quiser) disciplina, escolha a cor e, se quiser, envie uma capa. Clique em **Criar projeto**. A tela de edição abre sozinha.
+5. Na tela de edição, a barra lateral mostra as etapas e um **Próximo passo**, sempre com o que falta:
+   - **Cabeçalho** (opcional): escolha a cor e, se quiser, a capa. Clique em **Salvar cabeçalho**.
+   - **Sobre o projeto:** responda as perguntas (proposta, justificativa, equipe) e clique em **Gerar descrição com as respostas**, ou escreva direto. Clique em **Verificar ortografia** para corrigir palavras. Depois, **Salvar**.
+   - **PDF e slide:** envie o **PDF** (clicando no botão ou arrastando o arquivo) e cole o **link do slide**, clicando em **Salvar link**.
    - **Fotos:** clique em **Adicionar fotos** (pode escolher várias).
-   - **Situação:** quando estiver pronto, clique em **Publicar no mural**.
+   - **Publicar:** quando PDF e slide estiverem prontos, clique em **Publicar no mural**.
 6. **Ver como ficou:** o botão **Ver como no mural** mostra a página igual ao público.
 7. Para atualizar depois, entre de novo, abra o projeto na lista da sala e edite.
 
@@ -235,6 +237,7 @@ O botão de sol/lua, no canto inferior direito de todas as telas, alterna o tema
 | Arquivos | **Supabase Storage** (buckets privados) | PDFs e fotos |
 | Hospedagem | **Vercel** | Deploy automático a cada `git push` na `main` |
 | Tarefa agendada | **Vercel Cron** | Mantém o Supabase gratuito ativo |
+| Corretor ortográfico | **hunspell-asm** (Hunspell em WebAssembly, MIT) + **dictionary-pt** (VERO, pt-BR, LGPL/MPL) | Verificar ortografia no servidor, sem serviço externo |
 
 > **Atenção, Next.js 16:** esta versão tem mudanças em relação às anteriores. O arquivo `proxy.ts` substitui o antigo `middleware.ts`, e `params` e `searchParams` são assíncronos (`await`). O arquivo [AGENTS.md](AGENTS.md) é gerado pelo Next e orienta a ler a documentação em `node_modules/next/dist/docs/` antes de alterar código.
 
@@ -278,7 +281,7 @@ As funções da Vercel aceitam corpo de requisição de cerca de **4,5 MB**. Um 
 | `/entrar` | todos | Login |
 | `/trocar-senha` | logados | Troca obrigatória no 1º acesso |
 | `/sala` | aluno | Projetos da própria sala + novo projeto |
-| `/projeto/[id]/editar` | aluno (sala) e professor | Dados, PDF, link do slide, fotos e situação |
+| `/projeto/[id]/editar` | aluno (sala) e professor | Etapas: cabeçalho (cor e capa), sobre, PDF e slide, fotos e publicar |
 | `/painel` | professor | Gestão + medidor de armazenamento |
 | `/painel/alunos` | professor | Contas |
 | `/painel/projetos` | professor | Projetos por turma |
@@ -291,7 +294,7 @@ As funções da Vercel aceitam corpo de requisição de cerca de **4,5 MB**. Um 
 | Arquivo | Ações |
 |---|---|
 | `lib/acoes-sessao.ts` | `entrar`, `trocarSenha`, `sair` |
-| `lib/acoes-projeto.ts` | `criarProjeto`, `salvarDados`, `salvarLinkSlide`, `definirStatus`, `excluirProjeto`, `salvarDocumento`, `removerDocumento`, `adicionarFoto`, `removerFoto` |
+| `lib/acoes-projeto.ts` | `criarProjeto` (devolve o `id`), `salvarDados`, `salvarCor`, `salvarCapa`, `removerCapa`, `salvarLinkSlide`, `definirStatus`, `excluirProjeto`, `salvarDocumento`, `removerDocumento`, `adicionarFoto`, `removerFoto`, `verificarOrtografia` |
 | `app/painel/alunos/acoes.ts` | `cadastrarAlunos`, `novaSenha`, `definirAtivo`, `definirAdmin`, `removerConta` |
 | `app/painel/anos/acoes.ts` | `criarAno`, `removerAno` |
 | `app/painel/acoes.ts` | `limparSoltos` |
@@ -328,6 +331,8 @@ ano_letivo ──< turma ──< projeto ──< documento
 |---|---|
 | `turma_id`, `semestre` (1–2), `titulo`, `descricao`, `disciplina` | Dados do projeto |
 | `link_slide` | Só aceita `http://` ou `https://`, até 500 caracteres |
+| `cor` | Cor do cabeçalho, no formato `#rrggbb`. Padrão `#128242` (verde). |
+| `capa` | Caminho da capa no bucket `capas`, ou vazio se não houver capa. |
 | `status` | `rascunho`, `publicado` ou `oculto` |
 | `criado_por`, `criado_em`, `atualizado_por`, `atualizado_em` | Autoria (preenchida por gatilho) |
 | `criado_por_nome`, `atualizado_por_nome` | **Cópia do nome em texto**, para o rodapé público. Continua certo mesmo se a conta for removida. |
@@ -368,6 +373,7 @@ Os arquivos ficam em [supabase/migrations/](supabase/migrations/). Cole cada um 
 | 6 | `20261108040000_semestre_link_medidor.sql` | Semestre, slide como link, 1 PDF por projeto, medidor de armazenamento | ✅ |
 | 7 | `20261108050000_bucket_fotos.sql` | Bucket de fotos aceita WebP, JPEG e PNG, até 1 MB | ✅ |
 | 8 | `20261108060000_disciplina_maiuscula.sql` | Passa as disciplinas já cadastradas para maiúsculas | ✅ |
+| 9 | `20261108070000_cor_e_capa.sql` | Colunas `cor` e `capa` do projeto, bucket `capas` e políticas de acesso | ✅ |
 
 > Numa instalação nova, rode **todas, na ordem**. O resultado final é o mesmo, já que as últimas corrigem as anteriores.
 
@@ -402,7 +408,7 @@ Se ela vazar: Supabase › Project Settings › API → gerar nova chave, atuali
 ### Privacidade (importante para a escola)
 
 - **Nomes públicos:** o rodapé do mural mostra o **nome completo** de quem criou e editou o projeto. Como os autores são alunos (possivelmente menores de idade), a escola deve avaliar se quer mostrar só o **primeiro nome** ou apelido. Isso exige uma pequena mudança no código.
-- **Fotos e documentos são públicos** depois de publicados. Oriente os alunos a não publicar dados pessoais (telefone, endereço, documentos) nem fotos de terceiros sem autorização.
+- **Fotos, capas e documentos são públicos** depois de publicados. Oriente os alunos a não publicar dados pessoais (telefone, endereço, documentos) nem fotos de terceiros sem autorização.
 - **E-mails dos alunos** ficam só no Supabase Auth e **não aparecem no site público**. Só professores os veem, no painel.
 - Como o site trata dados de menores, vale alinhar com a direção a base legal e o aviso de privacidade (LGPD).
 
@@ -412,6 +418,7 @@ Se ela vazar: Supabase › Project Settings › API → gerar nova chave, atuali
 |---|---|---|---|---|
 | `documentos` | PDF do projeto | `application/pdf` | 5 MB | `documentos/{projeto_id}/doc-{timestamp}.pdf` |
 | `fotos` | Fotos do projeto | `image/webp`, `image/jpeg`, `image/png` | 1 MB | `fotos/{projeto_id}/{uuid}.webp` |
+| `capas` | Capa do projeto (opcional) | `image/webp`, `image/jpeg`, `image/png` | 1 MB | `capas/{projeto_id}/{uuid}.webp` |
 
 ### Fotos: redução automática (`lib/imagem.ts`)
 
@@ -425,7 +432,7 @@ Uma foto de celular de 4 MB costuma ficar com 150 a 400 KB. Formatos que o naveg
 
 ### Quanto espaço isso consome
 
-Estimativa (não medida em arquivos reais): cerca de **2 MB por projeto** (PDF ~1 MB + fotos ~1 MB). Com ~42 projetos por ano (6 turmas × ~7 grupos), são ~**85 MB por ano**. O 1 GB gratuito dura vários anos, **contando os anos antigos** que forem cadastrados. O **medidor** do painel serve para acompanhar.
+Estimativa (não medida em arquivos reais): cerca de **2 MB por projeto** (PDF ~1 MB + fotos ~1 MB), mais até 1 MB se houver capa. Com ~42 projetos por ano (6 turmas × ~7 grupos), são ~**85 MB por ano**. O 1 GB gratuito dura vários anos, **contando os anos antigos** que forem cadastrados. O **medidor** do painel serve para acompanhar.
 
 Economia embutida: o slide é só um link, substituir o PDF apaga o antigo, excluir um projeto apaga seus arquivos, e o botão **Limpar** remove sobras.
 
@@ -510,8 +517,10 @@ app/
 │   ├── page.tsx                página pública do projeto
 │   └── editar/
 │       ├── page.tsx            tela de edição (busca dados e links temporários)
+│       ├── editor.tsx          barra lateral: prévia, etapas e próximo passo
+│       ├── cabecalho.tsx       cor e capa do projeto
 │       ├── status.tsx          publicar / rascunho / ocultar / excluir
-│       ├── form-dados.tsx      título, semestre, disciplina, descrição
+│       ├── form-dados.tsx      nome, semestre, disciplina, perguntas, descrição e ortografia
 │       ├── documentos.tsx      caixa do PDF e caixa do link do slide
 │       └── fotos.tsx           envio, galeria e remoção de fotos
 ├── sala/page.tsx               área do aluno
@@ -531,7 +540,9 @@ components/
 ├── seletor-turma.tsx           abas do painel: ano e turmas
 ├── confirmar.tsx               diálogo de confirmação (no lugar do confirm() do navegador)
 ├── formulario-acao.tsx         formulário de login/troca de senha, com o "olhinho" da senha
-├── novo-projeto.tsx            formulário de novo projeto
+├── novo-projeto.tsx            formulário de novo projeto (com cor e capa)
+├── campo-capa.tsx              escolha e prévia da capa
+├── seletor-cor.tsx             cores prontas e barra de matiz
 ├── lista-projetos.tsx          lista de projetos (sala e painel)
 ├── botao-tema.tsx              alternar claro/escuro
 ├── cabecalho-area.tsx          topo das áreas logadas
@@ -540,13 +551,17 @@ components/
 lib/
 ├── sessao.ts                   sessão, perfil, redirecionamentos
 ├── acoes-sessao.ts             entrar, trocar senha, sair
-├── acoes-projeto.ts            ações de projeto, PDF, link e fotos
+├── acoes-projeto.ts            ações de projeto, PDF, link, fotos, cor, capa e ortografia
+├── capa.ts                     envio da capa (reduz, envia e grava)
+├── ortografia.ts               corretor pt-BR no servidor (hunspell-asm)
+├── texto-projeto.ts            monta a descrição a partir das perguntas
 ├── projetos.ts                 regra "pode editar", texto de autoria, estilo de campo
 ├── turmas.ts                   tipo Turma e busca de turmas
 ├── imagem.ts                   redução de fotos
 ├── tema.ts                     script que aplica o tema antes de pintar a tela
 └── supabase/                   config.ts, servidor.ts, navegador.ts, admin.ts
 
+next.config.ts                  configuração do Next (pacote do corretor e dicionário no deploy)
 proxy.ts                        renova a sessão de login (substitui o middleware)
 supabase/migrations/            SQL do banco
 vercel.json                     framework e agendamento do cron
@@ -588,6 +603,7 @@ O site **ainda não tem** botão de backup. Não conte com backups automáticos 
 | *Para publicar, envie o documento em PDF e o link do slide* | Falta PDF ou link | Preencher o que faltou na tela de edição |
 | Slide não abre para o público | Compartilhamento do slide está restrito | Compartilhar como **"qualquer pessoa com o link"** |
 | Medidor mostra *"Não foi possível medir o armazenamento agora"* | A migração nº 6 não foi rodada (falta a função `uso_armazenamento`) | Rodar `20261108040000_semestre_link_medidor.sql` |
+| Erro ao criar ou salvar projeto, cabeçalho ou capa (menção às colunas `cor` ou `capa`) | Migração nº 9 não rodada | Rodar `20261108070000_cor_e_capa.sql` |
 | Mural mostra um ano sem projetos | O ano existe, mas está vazio | Normal. Remova em **Anos letivos** se foi engano. |
 | Mudou variável na Vercel e nada mudou | A Vercel só lê as variáveis em um novo deploy | **Redeploy** |
 | Supabase "pausado" | Ficou muito tempo sem uso | Em supabase.com, clique em **Restore**. Confira se o cron está ativo na Vercel (Settings › Cron Jobs). |
@@ -616,6 +632,7 @@ Para quem for evoluir o site, o porquê de algumas escolhas:
 | **RLS no banco** | Segurança que não depende da interface: vale mesmo se alguém chamar a API direto |
 | **Upload direto ao Storage** | Contorna o limite de ~4,5 MB das funções da Vercel |
 | **Compressão de foto no navegador** | O servidor nunca recebe a foto grande, e o espaço de 1 GB rende |
+| **Correção de ortografia sem IA e sem serviço externo** | O texto dos alunos (muitos menores) não sai do site, e o custo é zero. Só corrige palavras, não gramática. |
 | **Vercel + Supabase (plano gratuito)** | Custo zero e já conhecidos pela equipe em projetos anteriores |
 
 ## 18. Limitações conhecidas
@@ -624,6 +641,7 @@ Para quem for evoluir o site, o porquê de algumas escolhas:
 - **Sem recuperação de senha por e-mail.** O professor redefine a senha pelo painel.
 - **Sem comentários e sem prazos de entrega** (deixados para uma fase futura).
 - **Sem legenda de foto na interface**, embora a coluna exista no banco.
+- **Corretor só de ortografia:** não corrige concordância nem crase.
 - **Sem busca no mural** (a busca existe no banco, mas a tela atual navega só por pastas).
 - **Nomes completos** de autores aparecem no rodapé público (veja a [seção 10](#10-segurança-e-privacidade)).
 - **Colunas legadas** (`projeto.bimestre`, `projeto.tipo`, `documento.bimestre`) continuam no banco sem uso.
