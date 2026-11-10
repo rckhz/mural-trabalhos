@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirmar } from "@/components/confirmar";
 import { salvarDados, verificarOrtografia } from "@/lib/acoes-projeto";
 import type { ErroOrtografia } from "@/lib/ortografia";
 import { classeCampo } from "@/lib/projetos";
@@ -29,10 +30,21 @@ export function FormDados({ projeto }: { projeto: Dados }) {
   const [respostas, setRespostas] = useState<Respostas>({ proposta: "", justificativa: "", produtos: "" });
   const [descricao, setDescricao] = useState(projeto.descricao ?? "");
 
-  const gerar = () => {
+  const [dialogo, confirmar] = useConfirmar();
+
+  const gerar = async () => {
     const texto = montarDescricao(respostas);
     if (!texto) return;
-    if (descricao.trim() && !window.confirm("Substituir o texto atual da descrição?")) return;
+    if (
+      descricao.trim() &&
+      !(await confirmar({
+        titulo: "Substituir o texto atual?",
+        texto: "A descrição escrita agora será trocada pelo texto montado com as respostas.",
+        acao: "Substituir",
+      }))
+    ) {
+      return;
+    }
     setDescricao(texto);
   };
 
@@ -58,6 +70,7 @@ export function FormDados({ projeto }: { projeto: Dados }) {
 
   return (
     <Card>
+      {dialogo}
       <CardHeader>
         <CardTitle className="text-lg"><h2>Sobre o projeto</h2></CardTitle>
         <CardDescription>Responda as perguntas e clique em gerar. Depois você pode editar o texto.</CardDescription>
@@ -97,7 +110,7 @@ export function FormDados({ projeto }: { projeto: Dados }) {
               </div>
             ))}
             <div>
-              <Button type="button" variant="outline" onClick={gerar} disabled={!podeGerar}>
+              <Button type="button" variant="outline" onClick={() => void gerar()} disabled={!podeGerar}>
                 <Wand2 />Gerar descrição com as respostas
               </Button>
             </div>
