@@ -11,6 +11,7 @@ import { Documentos } from "./documentos";
 import { FormDados } from "./form-dados";
 import { Fotos } from "./fotos";
 import { StatusProjeto } from "./status";
+import { EditorProjeto } from "./editor";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UMA_HORA = 3600;
@@ -29,7 +30,7 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
   // O RLS só devolve o projeto se a pessoa puder vê-lo.
   const { data: projeto } = await supabase
     .from("projeto")
-    .select("id, titulo, descricao, disciplina, semestre, link_slide, status, turma_id, turma(serie, nome, ano_letivo)")
+    .select("id, titulo, descricao, disciplina, semestre, link_slide, status, cor, capa, turma_id, turma(serie, nome, ano_letivo)")
     .eq("id", id)
     .maybeSingle();
   if (!projeto) notFound();
@@ -53,16 +54,17 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
       : Promise.resolve({ data: [] as { signedUrl: string | null }[] }),
   ]);
 
+  // Capa: bucket privado, então um link temporário (1 h).
+  const { data: urlCapa } = projeto.capa
+    ? await supabase.storage.from("capas").createSignedUrl(projeto.capa, UMA_HORA)
+    : { data: null };
+
   return (
     <>
       <CabecalhoArea titulo={professora ? "Painel do professor" : "Minha sala"} nome={perfil.nome} />
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        <Voltar href={voltar}>Projetos</Voltar>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-sm text-muted-foreground">{rotuloTurma(turma)} · {projeto.semestre}º semestre</p>
-            <h1 className="text-2xl font-semibold tracking-tight">{projeto.titulo}</h1>
-          </div>
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-16">
+        <div className="flex items-center justify-between gap-3">
+          <Voltar href={voltar}>Projetos</Voltar>
           <Link href={`/projeto/${id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
             <Eye />Ver como no mural
           </Link>
@@ -73,17 +75,35 @@ export default async function EditarProjeto({ params }: { params: Promise<{ id: 
             Este projeto foi ocultado pelo professor e não pode ser editado no momento.
           </p>
         ) : (
-          <div className="mt-6 grid gap-6">
-            <StatusProjeto id={id} status={projeto.status} professora={professora} />
-            <FormDados projeto={projeto} />
-            <Documentos
+          <div className="mt-4">
+            <EditorProjeto
               projetoId={id}
-              pdf={{ url: urlPdf?.signedUrl ?? null, enviadoEm: doc ? formatarData(doc.atualizado_em) : null }}
-              linkSlide={projeto.link_slide}
-            />
-            <Fotos
-              projetoId={id}
-              fotos={(fotos ?? []).map((f, i) => ({ id: f.id, url: urlsFotos?.[i]?.signedUrl ?? null }))}
+              titulo={projeto.titulo}
+              rotuloTurma={rotuloTurma(turma)}
+              semestre={projeto.semestre}
+              corSalva={projeto.cor}
+              capaSalvaUrl={urlCapa?.signedUrl ?? null}
+              temCapa={Boolean(projeto.capa)}
+              temPdf={Boolean(doc)}
+              temSlide={Boolean(projeto.link_slide)}
+              publicado={projeto.status === "publicado"}
+              temDescricao={Boolean(projeto.descricao)}
+              temFotos={(fotos ?? []).length > 0}
+              sobre={<FormDados projeto={projeto} />}
+              documentos={
+                <Documentos
+                  projetoId={id}
+                  pdf={{ url: urlPdf?.signedUrl ?? null, enviadoEm: doc ? formatarData(doc.atualizado_em) : null }}
+                  linkSlide={projeto.link_slide}
+                />
+              }
+              fotos={
+                <Fotos
+                  projetoId={id}
+                  fotos={(fotos ?? []).map((f, i) => ({ id: f.id, url: urlsFotos?.[i]?.signedUrl ?? null }))}
+                />
+              }
+              situacao={<StatusProjeto id={id} status={projeto.status} professora={professora} />}
             />
           </div>
         )}

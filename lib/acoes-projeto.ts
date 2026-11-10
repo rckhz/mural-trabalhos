@@ -3,11 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
+import { verificarTexto, type ErroOrtografia } from "@/lib/ortografia";
 
 // Todas as ações usam o cliente com a sessão de quem está logado:
 // quem decide se pode ou não é o RLS do banco (aluno só mexe na própria sala).
 
 export type Resultado = { erro?: string; ok?: boolean };
+type CriarEstado = { erro?: string; id?: string } | null;
 
 async function sessao() {
   const s = await sessaoAtual();
@@ -58,22 +60,63 @@ function validar(d: ReturnType<typeof lerDados>) {
   return null;
 }
 
-export async function criarProjeto(_: string | null, form: FormData): Promise<string | null> {
+// Devolve o id para o navegador enviar a capa (se houver) e depois ir para a edição.
+export async function criarProjeto(_: CriarEstado, form: FormData): Promise<CriarEstado> {
   const s = await sessao();
   const d = lerDados(form);
   const erro = validar(d);
-  if (erro) return erro;
+  if (erro) return { erro };
+  const cor = String(form.get("cor") ?? "").toLowerCase();
+  if (!/^#[0-9a-f]{6}$/.test(cor)) return { erro: "Cor inválida." };
   // Aluno sempre cria na própria sala; professor escolhe a turma.
   const turmaId = s.perfil.funcao === "professora" ? String(form.get("turma_id") ?? "") : s.perfil.turma_id;
-  if (!turmaId) return "Escolha a turma.";
+  if (!turmaId) return { erro: "Escolha a turma." };
 
   const { data, error } = await s.supabase
     .from("projeto")
-    .insert({ titulo: d.titulo, semestre: d.semestre, disciplina: d.disciplina, turma_id: turmaId })
+    .insert({ titulo: d.titulo, semestre: d.semestre, disciplina: d.disciplina, turma_id: turmaId, cor })
     .select("id")
     .single();
-  if (error || !data) return "Não foi possível criar o projeto.";
-  redirect(`/projeto/${data.id}/editar`);
+  if (error || !data) return { erro: "Não foi possível criar o projeto." };
+  return { id: data.id };
+}
+
+export async function salvarCor(projetoId: string, cor: string): Promise<Resultado> {
+  const s = await sessao();
+  const valor = cor.toLowerCase();
+  if (!/^#[0-9a-f]{6}$/.test(valor)) return { erro: "Cor inválida." };
+  const { data, error } = await s.supabase.from("projeto").update({ cor: valor }).eq("id", projetoId).select("id");
+  if (error || !data?.length) return { erro: "Não foi possível salvar a cor." };
+  await tocar(s, projetoId);
+  revalidar(projetoId);
+  return { ok: true };
+}
+
+export async function removerCapa(projetoId: string): Promise<Resultado> {
+  const s = await sessao();
+  const { data: atual } = await s.supabase.from("projeto").select("capa").eq("id", projetoId).maybeSingle();
+  if (!atual) return { erro: "Projeto não encontrado." };
+  const { data, error } = await s.supabase.from("projeto").update({ capa: null }).eq("id", projetoId).select("id");
+  if (error || !data?.length) return { erro: "Não foi possível remover a capa." };
+  if (atual.capa) await s.supabase.storage.from("capas").remove([atual.capa]);
+  await tocar(s, projetoId);
+  revalidar(projetoId);
+  return { ok: true };
+}
+
+// Chamado depois que o navegador enviou a capa ao Storage (bucket "capas").
+export async function salvarCapa(projetoId: string, caminho: string): Promise<Resultado> {
+  const s = await sessao();
+  if (!caminho.startsWith(`${projetoId}/`)) return { erro: "Arquivo inválido." };
+
+  const { data: antiga } = await s.supabase.from("projeto").select("capa").eq("id", projetoId).maybeSingle();
+  const { data, error } = await s.supabase.from("projeto").update({ capa: caminho }).eq("id", projetoId).select("id");
+  if (error || !data?.length) return { erro: "Não foi possível salvar a capa." };
+  // Troca de capa: apaga a anterior para economizar espaço.
+  if (antiga?.capa && antiga.capa !== caminho) await s.supabase.storage.from("capas").remove([antiga.capa]);
+  await tocar(s, projetoId);
+  revalidar(projetoId);
+  return { ok: true };
 }
 
 export async function salvarDados(_: Resultado | null, form: FormData): Promise<Resultado> {
@@ -87,6 +130,17 @@ export async function salvarDados(_: Resultado | null, form: FormData): Promise<
   if (error || !data?.length) return { erro: "Não foi possível salvar." };
   revalidar(id);
   return { ok: true };
+}
+
+// Corretor ortográfico no próprio servidor (sem serviço externo). Só para quem está logado.
+export async function verificarOrtografia(texto: string): Promise<{ erros?: ErroOrtografia[]; erro?: string }> {
+  await sessao();
+  try {
+    return { erros: await verificarTexto(String(texto ?? "").slice(0, 3500)) };
+  } catch (e) {
+    console.error("Corretor ortográfico falhou:", e);
+    return { erro: "Não foi possível verificar a ortografia agora." };
+  }
 }
 
 // Link do slide (Google Apresentações, Canva, OneDrive...). Vazio = remover.
@@ -130,7 +184,7 @@ export async function excluirProjeto(id: string): Promise<Resultado> {
   if (s.perfil.funcao !== "professora") return { erro: "Só o professor pode excluir projetos." };
 
   // Apaga os arquivos do Storage antes (o banco não apaga arquivos sozinho).
-  for (const bucket of ["documentos", "fotos"]) {
+  for (const bucket of ["documentos", "fotos", "capas"]) {
     const { data: arquivos } = await s.supabase.storage.from(bucket).list(id, { limit: 1000 });
     if (arquivos?.length) await s.supabase.storage.from(bucket).remove(arquivos.map((a) => `${id}/${a.name}`));
   }

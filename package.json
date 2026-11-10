@@ -13,6 +13,8 @@
     "@tailwindcss/postcss": "^4.3.5",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
+    "dictionary-pt": "^4.0.0",
+    "hunspell-asm": "^4.0.2",
     "lucide-react": "^1.70.0",
     "next": "^16.4.5",
     "postcss": "^8.5.32",

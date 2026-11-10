@@ -11,7 +11,7 @@ export default async function Entrar() {
 
   return (
     <main className="mx-auto max-w-sm px-4 py-6">
-      <Voltar href="/">Início</Voltar>
+      <Voltar href="/mural">Mural</Voltar>
       <Card>
         <CardHeader>
           <CardTitle className="text-xl"><h1>Entrar</h1></CardTitle>
