@@ -123,7 +123,7 @@ Ao clicar num card, a pessoa vê:
 
 ## 5. Guia do aluno
 
-1. Na página inicial, clique em **"Sou aluno"** e depois em **"Entrar para enviar trabalho"**.
+1. Na página inicial, clique em **"Entrar"**. (O mural pode ser visto antes, sem login, pelo botão **"Ver o mural"**.)
 2. **Primeiro acesso:** entre com o e-mail e a **senha inicial**, que é o que vem antes do `@` do e-mail (ex.: `ana.souza@email.com` → senha `ana.souza`). O site pede para você criar uma senha nova, com **no mínimo 8 caracteres**.
 3. Você cai em **Minha sala**, onde aparecem os projetos da sua turma e o formulário **Novo projeto**.
 4. **Criar projeto:** informe título, semestre e (se quiser) disciplina, escolha a cor e, se quiser, envie uma capa. Clique em **Criar projeto**. A tela de edição abre sozinha.
@@ -143,7 +143,7 @@ Ao clicar num card, a pessoa vê:
 
 ## 6. Guia do professor
 
-Entre por **"Sou professor"**. A tela inicial é o **Painel**, com quatro áreas: **Alunos**, **Projetos**, **Anos letivos** e **Armazenamento**.
+Entre pelo botão **"Entrar"** da página inicial, com a conta de professor. A tela inicial é o **Painel**, com quatro áreas: **Alunos**, **Projetos**, **Anos letivos** e **Armazenamento**.
 
 ### 6.1 Começo do ano letivo
 
@@ -236,7 +236,7 @@ O botão de sol/lua, no canto inferior direito de todas as telas, alterna o tema
 | Banco e login | **Supabase** (Postgres + Auth) | Dados, contas e permissões (RLS) |
 | Arquivos | **Supabase Storage** (buckets privados) | PDFs e fotos |
 | Hospedagem | **Vercel** | Deploy automático a cada `git push` na `main` |
-| Tarefa agendada | **Vercel Cron** | Mantém o Supabase gratuito ativo |
+| Tarefas agendadas | **Vercel Cron** e **GitHub Actions** | Mantêm o Supabase gratuito ativo (dois despertadores) |
 | Corretor ortográfico | **hunspell-asm** (Hunspell em WebAssembly, MIT) + **dictionary-pt** (VERO, pt-BR, LGPL/MPL) | Verificar ortografia no servidor, sem serviço externo |
 
 > **Atenção, Next.js 16:** esta versão tem mudanças em relação às anteriores. O arquivo `proxy.ts` substitui o antigo `middleware.ts`, e `params` e `searchParams` são assíncronos (`await`). O arquivo [AGENTS.md](AGENTS.md) é gerado pelo Next e orienta a ler a documentação em `node_modules/next/dist/docs/` antes de alterar código.
@@ -252,7 +252,7 @@ O botão de sol/lua, no canto inferior direito de todas as telas, alterna o tema
                     Vercel Cron ──► /api/cron/manter-ativo (1x por dia)
 ```
 
-### Dois clientes do Supabase, três "papéis"
+### Três clientes do Supabase
 
 | Cliente | Arquivo | Onde roda | Identidade |
 |---|---|---|---|
@@ -275,7 +275,7 @@ As funções da Vercel aceitam corpo de requisição de cerca de **4,5 MB**. Um 
 
 | Rota | Quem acessa | O que é |
 |---|---|---|
-| `/` | todos | Página inicial: "Sou aluno" / "Sou professor" |
+| `/` | todos | Página inicial: apresentação, com os botões "Ver o mural" e "Entrar" |
 | `/mural` | todos | Pastas ano › série › turma, e projetos. Parâmetros: `?ano=2026&serie=1&turma=MIL` |
 | `/projeto/[id]` | todos* | Página pública do projeto (*rascunho só para sala e professores) |
 | `/entrar` | todos | Login |
@@ -417,8 +417,8 @@ Se ela vazar: Supabase › Project Settings › API → gerar nova chave, atuali
 | Bucket | Conteúdo | Tipos aceitos | Limite | Caminho |
 |---|---|---|---|---|
 | `documentos` | PDF do projeto | `application/pdf` | 5 MB | `documentos/{projeto_id}/doc-{timestamp}.pdf` |
-| `fotos` | Fotos do projeto | `image/webp`, `image/jpeg`, `image/png` | 1 MB | `fotos/{projeto_id}/{uuid}.webp` |
-| `capas` | Capa do projeto (opcional) | `image/webp`, `image/jpeg`, `image/png` | 1 MB | `capas/{projeto_id}/{uuid}.webp` |
+| `fotos` | Fotos do projeto | `image/webp`, `image/jpeg`, `image/png` | 1 MB | `fotos/{projeto_id}/{uuid}.webp` (ou `.jpg`, no Safari) |
+| `capas` | Capa do projeto (opcional) | `image/webp`, `image/jpeg`, `image/png` | 1 MB | `capas/{projeto_id}/{uuid}.webp` (ou `.jpg`, no Safari) |
 
 ### Fotos: redução automática (`lib/imagem.ts`)
 
@@ -432,7 +432,7 @@ Uma foto de celular de 4 MB costuma ficar com 150 a 400 KB. Formatos que o naveg
 
 ### Quanto espaço isso consome
 
-Estimativa (não medida em arquivos reais): cerca de **2 MB por projeto** (PDF ~1 MB + fotos ~1 MB), mais até 1 MB se houver capa. Com ~42 projetos por ano (6 turmas × ~7 grupos), são ~**85 MB por ano**. O 1 GB gratuito dura vários anos, **contando os anos antigos** que forem cadastrados. O **medidor** do painel serve para acompanhar.
+Estimativa (não medida em arquivos reais): cerca de **2 MB por projeto** (PDF ~1 MB + fotos ~1 MB), mais até 1 MB se houver capa. Com ~42 projetos por ano (6 turmas × ~7 grupos, número a confirmar com a professora), são ~**85 MB por ano**. O 1 GB gratuito dura vários anos, **contando os anos antigos** que forem cadastrados. O **medidor** do painel serve para acompanhar.
 
 Economia embutida: o slide é só um link, substituir o PDF apaga o antigo, excluir um projeto apaga seus arquivos, e o botão **Limpar** remove sobras.
 
@@ -445,7 +445,7 @@ Opções, da mais simples à mais trabalhosa: apagar arquivos de projetos antigo
 ### 1. Supabase
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
-2. No **SQL Editor**, rode as [8 migrações](#migrações-rodar-nesta-ordem) em ordem.
+2. No **SQL Editor**, rode as [9 migrações](#migrações-rodar-nesta-ordem) em ordem.
 3. Em **Authentication › Users › Add user**, crie o **primeiro professor** marcando **Auto Confirm User**.
 4. No SQL Editor, dê a ele o perfil de professor:
 
@@ -467,7 +467,7 @@ Opções, da mais simples à mais trabalhosa: apagar arquivos de projetos antigo
 ### 3. Conferir
 
 - Abra `/api/saude`: todas as variáveis necessárias devem aparecer `true` e o banco `ok (N turmas)`.
-- Entre como o professor em **Sou professor** e crie o ano atual em **Painel › Anos letivos**.
+- Entre como o professor pelo botão **Entrar** e crie o ano atual em **Painel › Anos letivos**.
 
 ### Variáveis de ambiente
 
@@ -510,6 +510,7 @@ app/
 ├── layout.tsx                  estrutura geral, script do tema, botão de tema
 ├── globals.css                 cores (tema claro/escuro) e estilos globais
 ├── page.tsx                    página inicial
+├── icon.svg                    ícone do site (aba do navegador)
 ├── entrar/                     login
 ├── trocar-senha/               troca obrigatória no 1º acesso
 ├── mural/page.tsx              pastas e cards do mural público
@@ -565,6 +566,7 @@ next.config.ts                  configuração do Next (pacote do corretor e dic
 proxy.ts                        renova a sessão de login (substitui o middleware)
 supabase/migrations/            SQL do banco
 vercel.json                     framework e agendamento do cron
+.github/workflows/despertador-supabase.yml   despertador diário (GitHub Actions)
 ```
 
 ### Tema claro/escuro
@@ -581,7 +583,7 @@ Todo o texto da interface, as mensagens de erro e os comentários do código est
 |---|---|
 | **Supabase: 1 GB de arquivos** | Slide como link, fotos reduzidas, PDF limitado a 5 MB, substituir apaga o antigo, medidor no painel |
 | **Supabase: 500 MB de banco** | O banco guarda só texto e é minúsculo perto disso. O medidor mostra o uso. |
-| **Supabase pausa o projeto após cerca de 1 semana sem uso** | O **Vercel Cron** chama `/api/cron/manter-ativo` todo dia às 09:00 UTC, e o site consulta o banco. Isso mantém o projeto ativo nas férias. |
+| **Supabase pausa o projeto após cerca de 1 semana sem uso** | Dois despertadores consultam o banco todo dia, para o projeto não pausar nas férias: o **Vercel Cron** (`/api/cron/manter-ativo`, às 09:00 UTC) e o workflow do **GitHub Actions** (`.github/workflows/despertador-supabase.yml`, às 12:00 UTC). O workflow precisa dos secrets `SUPABASE_URL` e `SUPABASE_ANON_KEY` no GitHub. O GitHub desativa agendamentos após cerca de 60 dias sem atividade no repositório. |
 | **Vercel: corpo de requisição de cerca de 4,5 MB** | Os arquivos vão direto do navegador ao Supabase |
 | **Tamanho mínimo de senha do Supabase: 6** | A senha inicial é completada com números quando o e-mail é curto |
 
@@ -606,7 +608,7 @@ O site **ainda não tem** botão de backup. Não conte com backups automáticos 
 | Erro ao criar ou salvar projeto, cabeçalho ou capa (menção às colunas `cor` ou `capa`) | Migração nº 9 não rodada | Rodar `20261108070000_cor_e_capa.sql` |
 | Mural mostra um ano sem projetos | O ano existe, mas está vazio | Normal. Remova em **Anos letivos** se foi engano. |
 | Mudou variável na Vercel e nada mudou | A Vercel só lê as variáveis em um novo deploy | **Redeploy** |
-| Supabase "pausado" | Ficou muito tempo sem uso | Em supabase.com, clique em **Restore**. Confira se o cron está ativo na Vercel (Settings › Cron Jobs). |
+| Supabase "pausado" | Ficou muito tempo sem uso | Em supabase.com, clique em **Restore**. Confira se o cron está ativo na Vercel (Settings › Cron Jobs) e se o workflow **Despertador do Supabase** roda sem erro (aba Actions do GitHub). |
 
 **Ferramentas de diagnóstico**
 - `/api/saude` mostra quais variáveis existem (sem valores) e se o banco responde.
