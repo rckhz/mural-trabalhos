@@ -1,6 +1,6 @@
 import { Folder } from "lucide-react";
-import { CabecalhoArea } from "@/components/cabecalho-area";
-import { Voltar } from "@/components/voltar";
+import { CabecalhoPainel } from "../cabecalho";
+import styles from "../painel.module.css";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { exigir } from "@/lib/sessao";
 import { NovoAno, RemoverAno } from "./formularios";
@@ -21,15 +21,15 @@ export default async function Anos() {
 
   return (
     <>
-      <CabecalhoArea titulo="Painel do professor" nome={perfil.nome} />
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        <Voltar href="/painel">Painel</Voltar>
-        <h1 className="text-2xl font-semibold tracking-tight">Anos letivos</h1>
+      <CabecalhoPainel atual="Anos letivos" nome={perfil.nome} />
+      <main id="conteudo" className={styles.main}>
+
+        <h1>Anos letivos</h1>
         <p className="mt-1 text-muted-foreground">
           Cada ano vira uma pasta no mural, com as turmas 1º, 2º e 3º (MIL e MIN) dentro.
         </p>
 
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg"><h2>Anos criados</h2></CardTitle>

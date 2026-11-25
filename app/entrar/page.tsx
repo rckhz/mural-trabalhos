@@ -10,11 +10,11 @@ export default async function Entrar() {
   if (s) redirect(destino(s.perfil));
 
   return (
-    <main className="mx-auto max-w-sm px-4 py-6">
+    <main className="mx-auto grid min-h-svh max-w-md content-center px-5 py-16">
       <Voltar href="/mural">Mural</Voltar>
-      <Card>
+      <Card className="border-t-4 border-t-primary py-7">
         <CardHeader>
-          <CardTitle className="text-xl"><h1>Entrar</h1></CardTitle>
+          <CardTitle className="text-3xl font-medium tracking-tight"><h1>Entrar</h1></CardTitle>
           <CardDescription>Use o e-mail e a senha que a professora passou para você.</CardDescription>
         </CardHeader>
         <CardContent>

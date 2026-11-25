@@ -1,8 +1,8 @@
-import { CabecalhoArea } from "@/components/cabecalho-area";
+import { CabecalhoPainel } from "../cabecalho";
 import { ListaProjetos } from "@/components/lista-projetos";
 import { NovoProjeto } from "@/components/novo-projeto";
 import { SeletorTurma } from "@/components/seletor-turma";
-import { Voltar } from "@/components/voltar";
+import styles from "../painel.module.css";
 import { exigir } from "@/lib/sessao";
 import { buscarTurmas, rotuloTurma } from "@/lib/turmas";
 
@@ -23,14 +23,14 @@ export default async function ProjetosPainel({ searchParams }: { searchParams: P
 
   return (
     <>
-      <CabecalhoArea titulo="Painel do professor" nome={perfil.nome} />
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        <Voltar href="/painel">Painel</Voltar>
-        <h1 className="text-2xl font-semibold tracking-tight">Projetos</h1>
+      <CabecalhoPainel atual="Projetos" nome={perfil.nome} turma={sel?.id} />
+      <main id="conteudo" className={styles.main}>
+
+        <h1>Projetos</h1>
 
         <SeletorTurma turmas={turmas} sel={sel} base="/painel/projetos" />
 
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
           <ListaProjetos titulo={sel ? rotuloTurma(sel) : "Nenhuma turma"} projetos={projetos ?? []} />
           <NovoProjeto key={sel?.id} turmas={turmas} turmaPadrao={sel?.id} />
         </div>

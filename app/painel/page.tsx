@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { CalendarDays, FolderKanban, HardDrive, Users } from "lucide-react";
-import { CabecalhoArea } from "@/components/cabecalho-area";
+import { ArrowUpRight, HardDrive } from "lucide-react";
+import { areas, CabecalhoPainel } from "./cabecalho";
+import styles from "./painel.module.css";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { exigir } from "@/lib/sessao";
 import { LimparSoltos } from "./medidor";
-
-const secoes = [
-  { href: "/painel/alunos", Icone: Users, titulo: "Alunos", texto: "Cadastrar, gerar nova senha e desativar contas" },
-  { href: "/painel/projetos", Icone: FolderKanban, titulo: "Projetos", texto: "Criar, publicar e ocultar projetos das turmas" },
-  { href: "/painel/anos", Icone: CalendarDays, titulo: "Anos letivos", texto: "Criar o ano novo, já com as 6 turmas" },
-];
 
 // Limites do plano gratuito do Supabase.
 const LIMITE_ARQUIVOS = 1024 ** 3; // 1 GB
@@ -63,23 +58,18 @@ export default async function Painel() {
 
   return (
     <>
-      <CabecalhoArea titulo="Painel do professor" nome={perfil.nome} />
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        <h1 className="text-2xl font-semibold tracking-tight">Gestão</h1>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {secoes.map(({ href, Icone, titulo, texto }) => (
-            <Link key={titulo} href={href} className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-              <Card className="h-full transition group-hover:ring-foreground/30">
-                <CardHeader>
-                  <Icone className="size-6 text-muted-foreground" aria-hidden />
-                  <CardTitle className="text-lg"><h2>{titulo}</h2></CardTitle>
-                  <CardDescription>{texto}</CardDescription>
-                </CardHeader>
-              </Card>
+      <CabecalhoPainel nome={perfil.nome} atual="Visão geral" />
+      <main id="conteudo" className={styles.main}>
+        <h1>Gestão do mural</h1>
+        <div className={styles.tiles}>
+          {areas.map(({ href, Icone, titulo, texto }) => (
+            <Link key={href} href={href} className={styles.tile}>
+              <div className={styles.tileIcons}><Icone size={26} aria-hidden /><ArrowUpRight size={20} aria-hidden /></div>
+              <h2>{titulo}</h2>
+              <p>{texto}</p>
             </Link>
           ))}
         </div>
-
         <Card className="mt-6">
           <CardHeader>
             <HardDrive className="size-6 text-muted-foreground" aria-hidden />

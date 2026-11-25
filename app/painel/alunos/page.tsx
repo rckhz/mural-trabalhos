@@ -1,6 +1,6 @@
-import { CabecalhoArea } from "@/components/cabecalho-area";
+import { CabecalhoPainel } from "../cabecalho";
 import { SeletorTurma } from "@/components/seletor-turma";
-import { Voltar } from "@/components/voltar";
+import styles from "../painel.module.css";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { exigir } from "@/lib/sessao";
@@ -44,14 +44,14 @@ export default async function Alunos({ searchParams }: { searchParams: Promise<{
 
   return (
     <>
-      <CabecalhoArea titulo="Painel do professor" nome={perfil.nome} />
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        <Voltar href="/painel">Painel</Voltar>
-        <h1 className="text-2xl font-semibold tracking-tight">Alunos</h1>
+      <CabecalhoPainel atual="Alunos" nome={perfil.nome} turma={sel?.id} />
+      <main id="conteudo" className={styles.main}>
+
+        <h1>Alunos</h1>
 
         <SeletorTurma turmas={lista} sel={sel} base="/painel/alunos" />
 
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">

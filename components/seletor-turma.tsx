@@ -13,9 +13,9 @@ export function SeletorTurma({ turmas, sel, base }: { turmas: Turma[]; sel?: Tur
     turmas.find((t) => t.ano_letivo === ano);
 
   return (
-    <div className="mt-4 grid gap-3">
+    <div className="mt-5 grid gap-2 rounded-xl border bg-card p-4">
       <nav className="flex flex-wrap items-center gap-2" aria-label="Ano letivo">
-        <span className="text-sm text-muted-foreground">Ano:</span>
+        <span className="text-sm text-muted-foreground">Ano letivo</span>
         {anos.map((a) => {
           const ativo = a === sel?.ano_letivo;
           return (
@@ -23,20 +23,21 @@ export function SeletorTurma({ turmas, sel, base }: { turmas: Turma[]; sel?: Tur
               key={a}
               href={`${base}?turma=${turmaDoAno(a)?.id}`}
               aria-current={ativo ? "page" : undefined}
-              className={buttonVariants({ variant: ativo ? "secondary" : "ghost", size: "sm" })}
+              className={buttonVariants({ variant: ativo ? "secondary" : "ghost", size: "sm", className: "min-h-11 px-3" })}
             >
               {a}
             </Link>
           );
         })}
       </nav>
-      <nav className="flex flex-wrap gap-2" aria-label="Turmas">
+      <nav className="flex flex-wrap items-center gap-2 border-t pt-2" aria-label="Turmas">
+        <span className="text-sm text-muted-foreground">Turma</span>
         {doAno.map((t) => (
           <Link
             key={t.id}
             href={`${base}?turma=${t.id}`}
             aria-current={t.id === sel?.id ? "page" : undefined}
-            className={buttonVariants({ variant: t.id === sel?.id ? "default" : "outline", size: "sm" })}
+            className={buttonVariants({ variant: t.id === sel?.id ? "default" : "outline", size: "sm", className: "min-h-11 px-3" })}
           >
             {t.serie}º {t.nome}
           </Link>

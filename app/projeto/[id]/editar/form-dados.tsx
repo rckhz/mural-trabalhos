@@ -140,7 +140,7 @@ export function FormDados({ projeto }: { projeto: Dados }) {
               </div>
               {avisoOrto && <p role="alert" className="text-sm text-destructive">{avisoOrto}</p>}
               {erros && erros.length === 0 && !verificando && (
-                <p className="text-sm text-[#128242]">Nenhum erro de ortografia encontrado.</p>
+                <p className="text-sm text-primary">Nenhum erro de ortografia encontrado.</p>
               )}
               {erros && erros.length > 0 && (
                 <ul className="grid gap-2 rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">

@@ -1,14 +1,14 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* @import "shadcn/tailwind.css"; */
 
 /* Tema escuro: atributo data-theme no <html>, definido pelo script do layout
    (escolha salva da pessoa ou, se não houver, o tema do aparelho). */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
+    --font-heading: var(--fonte-titulo), Arial, sans-serif;
+    --font-sans: var(--fonte-texto), Arial, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -50,79 +50,67 @@
 }
 
 :root {
-    /* Tema claro: bege, branco e verde-sálvia (tons de natureza). */
     color-scheme: light;
-    --background: oklch(0.93 0.022 90);
-    --foreground: oklch(0.26 0.03 155);
-    --card: oklch(0.975 0.01 95);
-    --card-foreground: oklch(0.26 0.03 155);
-    --popover: oklch(0.975 0.01 95);
-    --popover-foreground: oklch(0.26 0.03 155);
-    --primary: oklch(0.42 0.12 148);
-    --primary-foreground: oklch(0.985 0.01 95);
-    --secondary: oklch(0.92 0.06 142);
-    --secondary-foreground: oklch(0.3 0.08 148);
-    --muted: oklch(0.91 0.03 105);
-    --muted-foreground: oklch(0.5 0.05 150);
-    --accent: oklch(0.92 0.06 142);
-    --accent-foreground: oklch(0.3 0.08 148);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.85 0.025 100);
-    --input: oklch(0.83 0.03 100);
-    --ring: oklch(0.65 0.13 148);
-    --chart-1: oklch(0.8 0.12 145);
-    --chart-2: oklch(0.65 0.14 148);
-    --chart-3: oklch(0.5 0.13 148);
-    --chart-4: oklch(0.4 0.1 152);
-    --chart-5: oklch(0.3 0.07 155);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.965 0.02 95);
-    --sidebar-foreground: oklch(0.26 0.03 155);
-    --sidebar-primary: oklch(0.42 0.12 148);
-    --sidebar-primary-foreground: oklch(0.985 0.01 95);
-    --sidebar-accent: oklch(0.92 0.06 142);
-    --sidebar-accent-foreground: oklch(0.3 0.08 148);
-    --sidebar-border: oklch(0.89 0.02 100);
-    --sidebar-ring: oklch(0.65 0.13 148);
+    --background: #f3eddf;
+    --foreground: #1d2c40;
+    --card: #fcf9f1;
+    --card-foreground: var(--foreground);
+    --popover: var(--card);
+    --popover-foreground: var(--foreground);
+    --primary: #245794;
+    --primary-foreground: #fcf9f1;
+    --secondary: #dfe9f4;
+    --secondary-foreground: #244a75;
+    --muted: #e8e4da;
+    --muted-foreground: #53606c;
+    --accent: var(--secondary);
+    --accent-foreground: var(--secondary-foreground);
+    --destructive: #af2738;
+    --border: #d5d3cb;
+    --input: #a8adb2;
+    --ring: var(--primary);
+    --chart-1: #345e94;
+    --chart-2: #6185ae;
+    --chart-3: #556579;
+    --chart-4: #8094a9;
+    --chart-5: #314963;
+    --radius: 0.5rem;
+    --sidebar: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--accent-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --ink-panel: #263f5d;
+    --on-ink: #f5f7fb;
+    --index-paper: #ecdfc5;
+    --index-blue: #c6daef;
+    --index-mist: #dce5eb;
+    --index-ink: #20364c;
 }
-
 
 :root[data-theme="dark"] {
-    /* Faz o navegador desenhar listas de <select>, barras de rolagem etc. no tema escuro. */
     color-scheme: dark;
-    --background: oklch(0.21 0.014 155);
-    --foreground: oklch(0.96 0.01 95);
-    --card: oklch(0.26 0.014 155);
-    --card-foreground: oklch(0.96 0.01 95);
-    --popover: oklch(0.26 0.014 155);
-    --popover-foreground: oklch(0.96 0.01 95);
-    --primary: oklch(0.76 0.12 150);
-    --primary-foreground: oklch(0.2 0.03 155);
-    --secondary: oklch(0.32 0.016 155);
-    --secondary-foreground: oklch(0.96 0.01 95);
-    --muted: oklch(0.31 0.015 155);
-    --muted-foreground: oklch(0.8 0.02 150);
-    --accent: oklch(0.33 0.02 150);
-    --accent-foreground: oklch(0.96 0.01 95);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 14%);
-    --input: oklch(1 0 0 / 18%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --background: #212327;
+    --foreground: #e9ecf0;
+    --card: #292c31;
+    --primary: #9ebfe6;
+    --primary-foreground: #172637;
+    --secondary: #343f4c;
+    --secondary-foreground: #d8e6f6;
+    --muted: #33373c;
+    --muted-foreground: #b9bfc8;
+    --destructive: #fc9b9c;
+    --border: #474c54;
+    --input: #646b76;
+    --ink-panel: #30343a;
+    --index-paper: #45474a;
+    --index-blue: #3d4b5c;
+    --index-mist: #42484f;
+    --index-ink: #eef1f6;
 }
-
 /* Ao imprimir a lista de senhas, só o bloco #impressao aparece. */
 @media print {
   body * { visibility: hidden; }
@@ -149,6 +137,7 @@
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
     }
+  h1, h2, h3 { @apply font-heading; }
   html {
     @apply font-sans;
     }

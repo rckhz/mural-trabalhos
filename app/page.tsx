@@ -1,30 +1,37 @@
 import Link from "next/link";
-import { ArrowRight, LogIn } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { ArrowRight, ArrowUpRight, FolderOpen, LibraryBig, LogIn } from "lucide-react";
+import styles from "./inicio.module.css";
 
-// Página inicial: apresenta o site e leva ao mural. Não mostra nenhum projeto nem nome de aluno.
 export default function Inicio() {
   return (
-    <main className="grid min-h-dvh place-items-center px-6 py-16 text-center">
-      <div className="grid max-w-3xl justify-items-center gap-6">
-        <p className="text-sm font-semibold tracking-[0.25em] text-muted-foreground uppercase">
-          ETEC Dra. Ruth Cardoso
-        </p>
-        <h1 className="text-5xl font-bold leading-[1.05] tracking-tight text-primary sm:text-7xl">
-          Mural de Trabalhos
-        </h1>
-        <p className="max-w-xl text-lg text-muted-foreground">
-          Os projetos das turmas do Ensino Médio, reunidos num só lugar: documentos, slides e fotos de cada trabalho.
-        </p>
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/mural" className={buttonVariants({ size: "lg" })}>
-            Ver o mural <ArrowRight />
-          </Link>
-          <Link href="/entrar" className={buttonVariants({ variant: "outline", size: "lg" })}>
-            <LogIn />Entrar
-          </Link>
-        </div>
-      </div>
-    </main>
+    <div className={styles.page}>
+      <a href="#inicio" className={styles.skip}>Pular para o conteúdo</a>
+      <header className={styles.header}>
+        <span className={styles.school}><FolderOpen aria-hidden /> ETEC Dra. Ruth Cardoso</span>
+        <Link href="/entrar" className={styles.login}><LogIn size={17} aria-hidden /> Entrar</Link>
+      </header>
+      <main id="inicio" className={styles.main}>
+        <section aria-labelledby="titulo" className={styles.hero} data-enter>
+          <div className={styles.intro}>
+            <p className={styles.kicker}>Ensino Médio</p>
+            <h1 id="titulo">Mural de Trabalhos</h1>
+            <p className={styles.lead}>Explore os documentos, slides e fotos dos projetos das turmas da ETEC Dra. Ruth Cardoso.</p>
+            <Link href="/mural" className={styles.action}>Ver o mural <ArrowRight size={18} aria-hidden /></Link>
+          </div>
+          <nav className={styles.archive} aria-label="Explorar projetos por série">
+            <h2><LibraryBig size={19} aria-hidden /> Explorar por série</h2>
+            <div className={styles.folders}>
+              {[1, 2, 3].map((serie) => (
+                <Link key={serie} href={`/mural?serie=${serie}`} className={styles.folder} aria-label={`Ver trabalhos do ${serie}º ano`}>
+                  <span className={styles.tab} aria-hidden />
+                  <span className={styles.folderTitle}>{serie}º ano</span>
+                  <span className={styles.folderFoot}>MIL e MIN <ArrowUpRight size={19} aria-hidden /></span>
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </section>
+      </main>
+    </div>
   );
 }

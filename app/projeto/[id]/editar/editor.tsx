@@ -137,7 +137,7 @@ export function EditorProjeto(props: Props) {
         <div
           className={cn(
             "grid gap-1 rounded-xl border p-4 text-sm",
-            publicado ? "border-[#128242]/30 bg-[#E2EBE5]/60" : "border-amber-300/60 bg-amber-50 dark:bg-amber-950/30",
+            publicado ? "border-primary/30 bg-secondary/60" : "border-amber-300/60 bg-amber-50 dark:bg-amber-950/30",
           )}
         >
           <p className="font-semibold">{publicado ? "Situação: publicado" : "Próximo passo"}</p>
@@ -146,7 +146,7 @@ export function EditorProjeto(props: Props) {
             <button
               type="button"
               onClick={() => setSecao(proximo)}
-              className="mt-1 justify-self-start font-medium text-[#128242] underline underline-offset-4"
+              className="mt-1 justify-self-start font-medium text-primary underline underline-offset-4"
             >
               Ir para {proximo === "documento" ? "PDF e slide" : "Publicar"}
             </button>
@@ -165,13 +165,13 @@ export function EditorProjeto(props: Props) {
                 aria-current={ativa ? "step" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition",
-                  ativa ? "bg-[#C9E0D0] text-[#0A4A25]" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                  ativa ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                 )}
               >
                 <span
                   className={cn(
                     "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                    e.feita ? "bg-[#128242] text-white" : "bg-black/5 text-muted-foreground",
+                    e.feita ? "bg-primary text-primary-foreground" : "bg-black/5 text-muted-foreground",
                   )}
                 >
                   {e.feita ? <Check className="size-4" aria-hidden /> : i + 1}
@@ -179,7 +179,7 @@ export function EditorProjeto(props: Props) {
                 <Icone className="size-4 shrink-0" aria-hidden />
                 <span className="grid min-w-0 flex-1">
                   <span className={cn("truncate", ativa && "font-semibold")}>{e.rotulo}</span>
-                  <span className={cn("truncate text-xs", e.feita ? "font-medium text-[#128242]" : "text-muted-foreground")}>
+                  <span className={cn("truncate text-xs", e.feita ? "font-medium text-primary" : "text-muted-foreground")}>
                     {e.situacao}
                   </span>
                 </span>

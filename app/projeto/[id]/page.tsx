@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, FileText, Pencil, Presentation } from "lucide-react";
+import { ArrowDown, ArrowLeft, ExternalLink, FileText, Images, Pencil, Presentation } from "lucide-react";
 import { podeEditar } from "@/lib/projetos";
 import { sessaoAtual } from "@/lib/sessao";
 import { supabaseServidor } from "@/lib/supabase/servidor";
-import { Voltar } from "@/components/voltar";
+import styles from "./projeto.module.css";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -15,7 +15,7 @@ const UMA_HORA = 3600;
 const linkSeguro = (link: string | null) => (link && /^https?:\/\//i.test(link) ? link : null);
 const data = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
-export default async function Projeto({ params }: { params: Promise<{ id: string }> }) {
+export default async function Projeto({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ mural?: string | string[] }> }) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
 
@@ -33,6 +33,17 @@ export default async function Projeto({ params }: { params: Promise<{ id: string
   if (!projeto) notFound();
 
   const t = projeto.turma as unknown as { serie: number; nome: string; ano_letivo: number };
+  const { mural } = await searchParams;
+  let retorno = `/mural?ano=${t.ano_letivo}&serie=${t.serie}&turma=${encodeURIComponent(t.nome)}`;
+  if (typeof mural === "string" && (mural === "/mural" || mural.startsWith("/mural?"))) {
+    const filtros = new URLSearchParams(mural.split("?").slice(1).join("?"));
+    const permitidos = new URLSearchParams();
+    for (const campo of ["ano", "serie", "turma", "q"]) {
+      const valor = filtros.get(campo);
+      if (valor) permitidos.set(campo, valor);
+    }
+    retorno = `/mural${permitidos.size ? "?" + permitidos : ""}#trabalho-${id}`;
+  }
   const s = await sessaoAtual();
   const editavel = s ? podeEditar(s.perfil, projeto) : false;
 
@@ -54,143 +65,108 @@ export default async function Projeto({ params }: { params: Promise<{ id: string
       : Promise.resolve({ data: null }),
   ]);
 
+  const galeria = (fotos ?? []).flatMap((foto, i) => {
+    const url = urlsFotos?.[i]?.signedUrl;
+    return url ? [{ ...foto, url }] : [];
+  });
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 pb-16">
-      <div className="flex items-center justify-between gap-2">
-        <Voltar href={`/mural?ano=${t.ano_letivo}&serie=${t.serie}&turma=${t.nome}`}>Voltar ao mural</Voltar>
+    <main className={styles.page}>
+      <nav aria-label="Navegação do trabalho" className={styles.nav}>
+        <Link href={retorno} className={styles.back}>
+          <ArrowLeft size={17} aria-hidden /> Voltar ao mural
+        </Link>
         {editavel && (
-          <Link href={`/projeto/${id}/editar`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-            <Pencil />Editar
+          <Link href={`/projeto/${id}/editar`} className={buttonVariants({ variant: "outline", className: "min-h-11 px-4" })}>
+            <Pencil /> Editar trabalho
           </Link>
         )}
-      </div>
+      </nav>
 
-      <article className="mt-4 overflow-hidden rounded-2xl border border-black/10 bg-card shadow-sm">
-        <div className="relative h-44 w-full sm:h-56" style={{ backgroundColor: projeto.cor }}>
-          {urlCapa?.signedUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={urlCapa.signedUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          )}
-        </div>
-
-        <div className="grid gap-4 p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <span>{t.serie}º {t.nome} · {t.ano_letivo}</span>
-            <span className="size-1 rounded-full bg-current opacity-50" aria-hidden />
-            <span>{projeto.semestre}º semestre</span>
-            {projeto.disciplina && <Badge variant="secondary">{projeto.disciplina}</Badge>}
-            {projeto.status !== "publicado" && <Badge variant="outline">{projeto.status}</Badge>}
+      <article>
+        <header className={styles.hero}>
+          <div className={styles.heading}>
+            <p className={styles.kicker}>{t.ano_letivo} · {projeto.semestre}º semestre</p>
+            <h1>{projeto.titulo}</h1>
+            <div className={styles.tags}>
+              <span>{t.serie}º {t.nome}</span>
+              {projeto.disciplina && <span>{projeto.disciplina}</span>}
+              {projeto.status !== "publicado" && <Badge variant="outline">{projeto.status}</Badge>}
+            </div>
+            {(slide || urlDoc?.signedUrl || galeria.length > 0) && (
+              <nav className={styles.actions} aria-label="Materiais do trabalho">
+                {urlDoc?.signedUrl && <a className={styles.action} href="#documento"><FileText /> Ler documento <ArrowDown /></a>}
+                {slide && <a className={styles.action} href={slide} target="_blank" rel="noopener noreferrer"><Presentation /> Abrir slides <ExternalLink /></a>}
+                {galeria.length > 0 && <a className={styles.action} href="#fotos"><Images /> Ver fotos <ArrowDown /></a>}
+              </nav>
+            )}
           </div>
-
-          <h1 className="text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">{projeto.titulo}</h1>
-
-          {slide && (
-            <div>
-              <a href={slide} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "default" })}>
-                <Presentation />Abrir slide <ExternalLink />
-              </a>
+          {urlCapa?.signedUrl ? (
+            <div className={styles.cover}>
+              <img src={urlCapa.signedUrl} alt="" />
             </div>
-          )}
-        </div>
-      </article>
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_17rem] lg:items-start">
-        <div className="grid min-w-0 gap-10">
-          <section aria-labelledby="titulo-doc" className="grid gap-3">
-            <h2 id="titulo-doc" className="flex items-center gap-2 text-lg font-semibold">
-              <FileText className="size-5 text-primary" aria-hidden />Documento
-            </h2>
-            {!doc ? (
-              <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-                Nenhum documento enviado ainda.
-              </p>
-            ) : urlDoc?.signedUrl ? (
-              <>
-                <iframe
-                  className="h-[70vh] max-h-[720px] w-full rounded-xl border bg-card"
-                  src={urlDoc.signedUrl}
-                  title={`Documento: ${projeto.titulo}`}
-                />
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <a
-                    href={urlDoc.signedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={buttonVariants({ variant: "link" }) + " px-0"}
-                  >
-                    Abrir documento em tela cheia <ExternalLink />
-                  </a>
-                  {doc.status !== "publicado" && <Badge variant="outline">{doc.status}</Badge>}
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground">Não foi possível abrir o documento.</p>
-            )}
-          </section>
-
-          {(projeto.descricao || !!fotos?.length) && (
-            <section aria-labelledby="titulo-sobre" className="grid gap-4">
-              <h2 id="titulo-sobre" className="text-lg font-semibold">Sobre o trabalho</h2>
-              {projeto.descricao && (
-                <p className="whitespace-pre-line text-[15px] leading-relaxed text-foreground/90">{projeto.descricao}</p>
-              )}
-              {!!fotos?.length && (
-                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {fotos.map((f, i) => {
-                    const url = urlsFotos?.[i]?.signedUrl;
-                    if (!url) return null;
-                    return (
-                      <li key={f.id}>
-                        <figure className="grid gap-1.5">
-                          <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl ring-1 ring-black/10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={url}
-                              alt={f.legenda || "Foto do trabalho"}
-                              loading="lazy"
-                              className="aspect-4/3 w-full object-cover transition duration-300 hover:scale-105"
-                            />
-                          </a>
-                          {f.legenda && <figcaption className="text-sm text-muted-foreground">{f.legenda}</figcaption>}
-                        </figure>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          )}
-        </div>
-
-        <aside className="grid gap-4 rounded-xl border border-black/10 bg-card p-5 text-sm shadow-sm lg:sticky lg:top-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sobre este trabalho</h2>
-          <dl className="grid gap-3">
-            <div>
-              <dt className="text-muted-foreground">Turma</dt>
-              <dd className="font-medium">{t.serie}º {t.nome} · {t.ano_letivo}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Semestre</dt>
-              <dd className="font-medium">{projeto.semestre}º semestre</dd>
-            </div>
-            {projeto.disciplina && (
-              <div>
-                <dt className="text-muted-foreground">Disciplina</dt>
-                <dd className="font-medium">{projeto.disciplina}</dd>
+          ) : (
+            <div className={styles.index} aria-hidden="true">
+              <div className={styles.sheet} style={{ borderLeftColor: projeto.cor }}>
+                <span>ETEC Dra. Ruth Cardoso</span>
+                <strong>{t.serie}º {t.nome}</strong>
+                <span>{t.ano_letivo}</span>
               </div>
-            )}
-          </dl>
-
-          {(projeto.criado_por_nome || projeto.atualizado_por_nome) && (
-            <div className="grid gap-1 border-t pt-4 text-xs text-muted-foreground">
-              {projeto.criado_por_nome && <p>Criado por {projeto.criado_por_nome} em {data(projeto.criado_em)}</p>}
-              {projeto.atualizado_por_nome && (
-                <p>Última edição por {projeto.atualizado_por_nome} em {data(projeto.atualizado_em)}</p>
-              )}
             </div>
           )}
-        </aside>
-      </div>
+        </header>
+
+        {projeto.descricao && (
+          <section className={styles.section} aria-labelledby="sobre">
+            <h2 id="sobre">Sobre o trabalho</h2>
+            <p className={styles.description}>{projeto.descricao}</p>
+          </section>
+        )}
+
+        <section id="documento" className={styles.section} aria-labelledby="titulo-doc">
+          <div>
+            <h2 id="titulo-doc">Documento</h2>
+            {doc && doc.status !== "publicado" && <Badge variant="outline">{doc.status}</Badge>}
+          </div>
+          {urlDoc?.signedUrl ? (
+            <div className={styles.reader}>
+              <a href={urlDoc.signedUrl} target="_blank" rel="noopener noreferrer">
+                Abrir em nova aba <ExternalLink size={16} aria-hidden />
+              </a>
+              <iframe src={urlDoc.signedUrl} title={`Documento de ${projeto.titulo}`} loading="lazy" />
+            </div>
+          ) : (
+            <p className={styles.empty}><FileText size={19} aria-hidden />
+              {doc ? "Não foi possível abrir o documento." : "Nenhum documento enviado ainda."}
+            </p>
+          )}
+        </section>
+
+        {galeria.length > 0 && (
+          <section id="fotos" className={styles.section} aria-labelledby="titulo-fotos">
+            <h2 id="titulo-fotos">Fotos do trabalho</h2>
+            <ul className={styles.gallery}>
+              {galeria.map((foto, i) => (
+                <li key={foto.id}>
+                  <figure>
+                    <a href={foto.url} target="_blank" rel="noopener noreferrer">
+                      <img src={foto.url} alt={foto.legenda || `Foto ${i + 1} do trabalho`} loading="lazy" />
+                    </a>
+                    {foto.legenda && <figcaption>{foto.legenda}</figcaption>}
+                  </figure>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {(projeto.criado_por_nome || projeto.atualizado_por_nome) && (
+          <footer className={styles.byline}>
+            {projeto.criado_por_nome && <p>Criado por {projeto.criado_por_nome} em {data(projeto.criado_em)}</p>}
+            {projeto.atualizado_por_nome && <p>Última edição por {projeto.atualizado_por_nome} em {data(projeto.atualizado_em)}</p>}
+          </footer>
+        )}
+      </article>
     </main>
   );
 }
